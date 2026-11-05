@@ -9,11 +9,14 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN addgroup -S boozer && adduser -S boozer -G boozer
-USER boozer
 
 COPY --from=builder /app/target/boozer-backend-1.0.0-SNAPSHOT.jar app.jar
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh && chown -R boozer:boozer /app
+
+USER boozer
 
 EXPOSE 8080
-ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
+ENV JAVA_OPTS="-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=65.0"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["./entrypoint.sh"]
