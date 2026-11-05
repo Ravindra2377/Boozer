@@ -37,7 +37,6 @@ services:
   - type: web
     name: boozer-web
     env: static
-    region: singapore
     buildCommand: cd web && npm install && npm run build
     staticPublishPath: ./web/dist
     routes:
@@ -46,10 +45,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: boozer-backend
-          property: url
+        value: https://boozer-backend.onrender.com/api/v1
 
   # 3. In-Memory Redis Cache (OTP sessions & live rider GPS coordinates)
   - type: redis
