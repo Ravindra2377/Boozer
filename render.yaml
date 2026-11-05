@@ -1,0 +1,68 @@
+# ==============================================================================
+# BOOZER · RENDER DEPLOYMENT BLUEPRINT (render.yaml)
+# 1-Click Cloud Deployment for Full Stack: PostgreSQL + Redis + Backend + Web
+# ==============================================================================
+
+services:
+  # 1. Spring Boot 3.3 (Java 21) Modular Monolith Backend
+  - type: web
+    name: boozer-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore # Lowest latency to India (~45ms)
+    plan: starter     # 24/7 always-on (no sleep)
+    healthCheckPath: /api/v1/compliance/excise/status
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: boozer-postgres
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: boozer-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: boozer-redis
+          property: port
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BOOZER_KYC_MIN_LEGAL_AGE
+        value: "21"
+
+  # 2. React + Vite Web Portal (Customer, Retailer & Admin Command Center)
+  - type: web
+    name: boozer-web
+    env: static
+    region: singapore
+    buildCommand: cd web && npm install && npm run build
+    staticPublishPath: ./web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: boozer-backend
+          property: url
+
+  # 3. In-Memory Redis Cache (OTP sessions & live rider GPS coordinates)
+  - type: redis
+    name: boozer-redis
+    region: singapore
+    plan: starter
+    ipAllowList: [] # internal network only
+
+# 4. Primary Relational PostgreSQL 16 Database
+databases:
+  - name: boozer-postgres
+    databaseName: boozer_db
+    user: boozer_user
+    region: singapore
+    plan: starter
+    postgresMajorVersion: "16"

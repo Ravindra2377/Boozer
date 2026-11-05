@@ -1,0 +1,1037 @@
+openapi: 3.0.3
+info:
+  title: BOOZER Core API
+  description: >
+    Modular Monolith API for BOOZER: Legal Alcohol Delivery with Built-in Safe Rides.
+    Complies with Indian State Excise Regulations and DPDP Act 2023.
+  version: 1.0.0
+  contact:
+    name: Boozer Engineering Team
+    email: dev@boozerapp.in
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development Server
+  - url: https://staging-api.boozerapp.in/api/v1
+    description: AWS Mumbai Staging Environment
+  - url: https://api.boozerapp.in/api/v1
+    description: AWS Mumbai Production Environment
+
+tags:
+  - name: Auth
+    description: Phone OTP login, JWT authentication, and session tokens
+  - name: KYC
+    description: DigiLocker age & identity verification (DPDP Act compliant)
+  - name: Catalog
+    description: Licensed retailers, legal MRP catalog, and stock availability
+  - name: Orders
+    description: Order lifecycle and state machine (CREATED -> DELIVERED)
+  - name: Payments
+    description: Razorpay gateway integration, webhooks, and refunds
+  - name: Delivery
+    description: Rider assignment, live GPS tracking, and doorstep checks
+  - name: Rides
+    description: Safe ride credit, partner booking (Uber/Ola/Rapido), and trip sharing
+  - name: Safety
+    description: SOS trigger, trusted emergency contacts, and incident response
+  - name: Retailer Portal
+    description: Store order queue, stock toggles, and payouts
+  - name: Admin
+    description: KYC manual review queue, retailer licensing, refunds, and audit trail
+
+paths:
+  # ==========================================================================
+  # AUTH MODULE
+  # ==========================================================================
+  /auth/request-otp:
+    post:
+      tags: [Auth]
+      summary: Request phone OTP for login or sign-up
+      operationId: requestOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "+919876543210"
+      responses:
+        "200":
+          description: OTP dispatched via SMS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    example: "otp_req_98124b81"
+                  expiresInSeconds:
+                    type: integer
+                    example: 180
+
+  /auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and receive JWT tokens
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp, requestId]
+              properties:
+                phone:
+                  type: string
+                  example: "+919876543210"
+                otp:
+                  type: string
+                  example: "482194"
+                requestId:
+                  type: string
+                  example: "otp_req_98124b81"
+      responses:
+        "200":
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get authenticated user profile and KYC status
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  # ==========================================================================
+  # KYC & AGE VERIFICATION MODULE
+  # ==========================================================================
+  /kyc/initiate:
+    post:
+      tags: [KYC]
+      summary: Initiate DigiLocker verification session
+      operationId: initiateKyc
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: DigiLocker redirect session initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                    example: "kyc_sess_09124"
+                  redirectUrl:
+                    type: string
+                    example: "https://digilocker.meripehchan.gov.in/public/oauth2/1/authorize?..."
+
+  /kyc/callback:
+    post:
+      tags: [KYC]
+      summary: Process DigiLocker verification callback
+      operationId: handleKycCallback
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, authorizationCode]
+              properties:
+                sessionId:
+                  type: string
+                authorizationCode:
+                  type: string
+      responses:
+        "200":
+          description: Verification processed (only age result and masked token stored)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycStatusResponse'
+
+  /kyc/status:
+    get:
+      tags: [KYC]
+      summary: Retrieve current KYC and legal drinking age status
+      operationId: getKycStatus
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: KYC verification status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycStatusResponse'
+
+  # ==========================================================================
+  # CATALOG & RETAILER MODULE
+  # ==========================================================================
+  /catalog/retailers:
+    get:
+      tags: [Catalog]
+      summary: Find licensed retailers servicing user's location
+      operationId: getNearbyRetailers
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 28.6328
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 77.2197
+      responses:
+        "200":
+          description: List of active, licensed retailers within permitted operating hours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RetailerSummary'
+
+  /catalog/retailers/{retailerId}/products:
+    get:
+      tags: [Catalog]
+      summary: Get inventory catalog for a licensed retailer
+      operationId: getRetailerProducts
+      parameters:
+        - name: retailerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [BEER, WINE, WHISKY, VODKA, RUM, GIN, TEQUILA, RTD, MIXERS_AND_SODA]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retailer product catalog with strictly fixed legal MRPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  # ==========================================================================
+  # ORDERS & STATE MACHINE MODULE
+  # ==========================================================================
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create an order (Hard rule: KYC verified check, legal hours check)
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        "201":
+          description: Order created with status CREATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        "403":
+          description: KYC not verified or outside permitted state hours
+
+  /orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order details and current state
+      operationId: getOrderById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+
+  /orders/{orderId}/live-tracking:
+    get:
+      tags: [Orders]
+      summary: Live order tracking, rider coordinates and ETA
+      operationId: getOrderTracking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Live tracking stream coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingInfo'
+
+  /orders/{orderId}/confirm-door-age:
+    post:
+      tags: [Orders]
+      summary: Rider confirms doorstep age verification (State transition: ARRIVED -> AGE_CHECKED)
+      operationId: confirmDoorAge
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [verificationMethod, riderConfirmationCode]
+              properties:
+                verificationMethod:
+                  type: string
+                  enum: [DIGITAL_OTP, PHYSICAL_GOV_ID]
+                riderConfirmationCode:
+                  type: string
+      responses:
+        "200":
+          description: Doorstep check recorded; order ready for DELIVERED state
+
+  # ==========================================================================
+  # PAYMENTS MODULE
+  # ==========================================================================
+  /payments/create-razorpay-order:
+    post:
+      tags: [Payments]
+      summary: Initialize Razorpay payment order
+      operationId: createPaymentOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId]
+              properties:
+                orderId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Razorpay order ID and checkout details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  razorpayOrderId:
+                    type: string
+                    example: "order_K8z9J12lK4"
+                  amount:
+                    type: number
+                    example: 1870.00
+                  currency:
+                    type: string
+                    example: "INR"
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Razorpay webhook callback for payment capture and refunds
+      operationId: handlePaymentWebhook
+      responses:
+        "200":
+          description: Webhook processed and order updated to PAID
+
+  # ==========================================================================
+  # SAFE RIDE MODULE
+  # ==========================================================================
+  /rides/credits:
+    get:
+      tags: [Rides]
+      summary: Get active ride credits issued from alcohol orders
+      operationId: getRideCredits
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Available ride credits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RideCredit'
+
+  /rides/estimate:
+    post:
+      tags: [Rides]
+      summary: Estimate fares across ride partners (Uber, Ola, Rapido)
+      operationId: estimateRideFare
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideEstimateRequest'
+      responses:
+        "200":
+          description: Fare estimates with auto-applied ride credit
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PartnerEstimate'
+
+  /rides/book:
+    post:
+      tags: [Rides]
+      summary: Book a ride or generate partner authenticated deep-link
+      operationId: bookRide
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRideRequest'
+      responses:
+        "200":
+          description: Ride booking confirmed or deep link generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RideBookingDetail'
+
+  /rides/{rideId}/share-trip:
+    post:
+      tags: [Rides]
+      summary: Generate trusted contact shareable live tracking link
+      operationId: shareTrip
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Public secure trip share link generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shareUrl:
+                    type: string
+                    example: "https://track.boozerapp.in/trip/t_89a12c49e"
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  # ==========================================================================
+  # SAFETY CENTRE & SOS MODULE
+  # ==========================================================================
+  /safety/contacts:
+    get:
+      tags: [Safety]
+      summary: List trusted emergency contacts
+      operationId: getTrustedContacts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrustedContact'
+    post:
+      tags: [Safety]
+      summary: Add a new trusted emergency contact
+      operationId: addTrustedContact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedContact'
+
+  /safety/sos/trigger:
+    post:
+      tags: [Safety]
+      summary: Trigger emergency SOS alert (High Priority - SMS + Push + Location)
+      operationId: triggerSos
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat:
+                  type: number
+                  example: 28.6328
+                lng:
+                  type: number
+                  example: 77.2197
+                orderId:
+                  type: string
+                  format: uuid
+                rideBookingId:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  example: "User held persistent SOS button for 3 seconds"
+      responses:
+        "201":
+          description: SOS logged and alerts dispatched immediately
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyEvent'
+
+  # ==========================================================================
+  # RETAILER PORTAL MODULE
+  # ==========================================================================
+  /retailer-portal/orders:
+    get:
+      tags: [Retailer Portal]
+      summary: Get incoming order queue for retailer store
+      operationId: getRetailerOrderQueue
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderDetail'
+
+  /retailer-portal/orders/{orderId}/status:
+    put:
+      tags: [Retailer Portal]
+      summary: Update order state in queue (ACCEPT, PACK, DISPATCH)
+      operationId: updateOrderStatusByRetailer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nextState]
+              properties:
+                nextState:
+                  type: string
+                  enum: [ACCEPTED, PACKED, DISPATCHED]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+
+  /retailer-portal/inventory/stock:
+    put:
+      tags: [Retailer Portal]
+      summary: Toggle stock availability and update inventory quantity
+      operationId: updateStock
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, quantity]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          description: Stock updated successfully
+
+  # ==========================================================================
+  # ADMIN & COMPLIANCE MODULE
+  # ==========================================================================
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: System metrics (orders, KYC pass rate, ride redemption, SOS alerts)
+      operationId: getAdminDashboardMetrics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Aggregated metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboardMetrics'
+
+  /admin/kyc-review-queue:
+    get:
+      tags: [Admin]
+      summary: Review flagged KYC records needing manual intervention
+      operationId: getKycReviewQueue
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KycReviewItem'
+
+  /admin/audit-logs:
+    get:
+      tags: [Admin]
+      summary: Query immutable audit logs for compliance
+      operationId: getAuditLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogEntry'
+
+# ============================================================================
+# COMPONENTS & SCHEMAS
+# ============================================================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+        fullName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        kycStatus:
+          type: string
+          enum: [PENDING, VERIFIED, REJECTED, EXPIRED]
+
+    KycStatusResponse:
+      type: object
+      properties:
+        kycStatus:
+          type: string
+          enum: [PENDING, VERIFIED, REJECTED, EXPIRED]
+        ageVerified:
+          type: boolean
+        calculatedAge:
+          type: integer
+        verifiedAt:
+          type: string
+          format: date-time
+
+    RetailerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storeName:
+          type: string
+        licenceNumber:
+          type: string
+        city:
+          type: string
+        operatingHours:
+          type: string
+          example: "10:00 AM - 10:00 PM"
+        isOpenNow:
+          type: boolean
+        distanceKm:
+          type: number
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        category:
+          type: string
+        abv:
+          type: number
+        volumeMl:
+          type: integer
+        legalMrp:
+          type: number
+        stockQuantity:
+          type: integer
+        isInStock:
+          type: boolean
+        imageUrl:
+          type: string
+
+    CreateOrderRequest:
+      type: object
+      required: [retailerId, items, deliveryAddress, deliveryLat, deliveryLng]
+      properties:
+        retailerId:
+          type: string
+          format: uuid
+        deliveryAddress:
+          type: string
+        deliveryLat:
+          type: number
+        deliveryLng:
+          type: number
+        items:
+          type: array
+          items:
+            type: object
+            required: [productId, quantity]
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+
+    OrderDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+        status:
+          type: string
+          enum: [CREATED, PAID, ACCEPTED, PACKED, DISPATCHED, ARRIVED, AGE_CHECKED, DELIVERED, CANCELLED, REFUNDED]
+        subtotalAmount:
+          type: number
+        deliveryFee:
+          type: number
+        totalAmount:
+          type: number
+        ageCheckAtDoorVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    TrackingInfo:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        riderName:
+          type: string
+        riderPhone:
+          type: string
+        riderLat:
+          type: number
+        riderLng:
+          type: number
+        estimatedMinutesRemaining:
+          type: integer
+
+    RideCredit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        creditCode:
+          type: string
+        amount:
+          type: number
+        isRedeemed:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+
+    RideEstimateRequest:
+      type: object
+      required: [pickupLat, pickupLng, dropoffLat, dropoffLng]
+      properties:
+        pickupLat:
+          type: number
+        pickupLng:
+          type: number
+        dropoffLat:
+          type: number
+        dropoffLng:
+          type: number
+
+    PartnerEstimate:
+      type: object
+      properties:
+        partner:
+          type: string
+          enum: [UBER, OLA, RAPIDO, LOCAL_FLEET]
+        vehicleType:
+          type: string
+        estimatedFare:
+          type: number
+        creditDiscount:
+          type: number
+        payableFare:
+          type: number
+        etaMinutes:
+          type: integer
+
+    BookRideRequest:
+      type: object
+      required: [partner, pickupAddress, pickupLat, pickupLng, dropoffAddress, dropoffLat, dropoffLng]
+      properties:
+        partner:
+          type: string
+        pickupAddress:
+          type: string
+        pickupLat:
+          type: number
+        pickupLng:
+          type: number
+        dropoffAddress:
+          type: string
+        dropoffLat:
+          type: number
+        dropoffLng:
+          type: number
+        rideCreditId:
+          type: string
+          format: uuid
+
+    RideBookingDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partner:
+          type: string
+        status:
+          type: string
+        deepLinkUrl:
+          type: string
+        tripShareUrl:
+          type: string
+
+    TrustedContact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        relationship:
+          type: string
+
+    CreateContactRequest:
+      type: object
+      required: [name, phone]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        relationship:
+          type: string
+
+    SafetyEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        status:
+          type: string
+        contactsNotifiedCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminDashboardMetrics:
+      type: object
+      properties:
+        totalOrdersToday:
+          type: integer
+        activeDeliveries:
+          type: integer
+        kycVerificationSuccessRate:
+          type: number
+        rideCreditsRedeemedPercentage:
+          type: number
+        openSafetyIncidents:
+          type: integer
+
+    KycReviewItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        documentType:
+          type: string
+        maskedId:
+          type: string
+        calculatedAge:
+          type: integer
+        status:
+          type: string
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        actorRole:
+          type: string
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

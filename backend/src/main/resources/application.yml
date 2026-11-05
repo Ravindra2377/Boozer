@@ -1,0 +1,71 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: boozer-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/boozer_db}
+    username: ${SPRING_DATASOURCE_USERNAME:boozer_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:boozer_dev_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+boozer:
+  jwt:
+    secret: ${JWT_SECRET:4c6567616c416c636f686f6c44656c6976657279576974685361666552696465}
+    access-token-expiration-ms: 900000 # 15 minutes
+    refresh-token-expiration-ms: 604800000 # 7 days
+
+  kyc:
+    provider: DIGILOCKER
+    api-key: ${DIGILOCKER_API_KEY:mock_digilocker_key}
+    min-legal-age: 21
+
+  payments:
+    razorpay:
+      key-id: ${RAZORPAY_KEY_ID:rzp_test_placeholder}
+      key-secret: ${RAZORPAY_KEY_SECRET:rzp_secret_placeholder}
+      webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:whsec_placeholder}
+
+  rides:
+    safe-ride-credit-cap-inr: 150.00
+    credit-validity-hours: 24
+    partner-preference-order:
+      - UBER
+      - OLA
+      - RAPIDO
+
+logging:
+  level:
+    com.boozer: DEBUG
+    org.springframework.web: INFO
+    org.flywaydb: INFO
