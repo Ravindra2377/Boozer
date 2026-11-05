@@ -8,9 +8,9 @@ spring:
     name: boozer-backend
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/boozer_db}
-    username: ${SPRING_DATASOURCE_USERNAME:boozer_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:boozer_dev_password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:boozer_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:boozer_user}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:boozer_dev_password}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20

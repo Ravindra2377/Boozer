@@ -14,10 +14,26 @@ services:
     plan: free        # 100% Free Tier ($0/mo)
     healthCheckPath: /api/v1/compliance/excise/status
     envVars:
-      - key: SPRING_DATASOURCE_URL
+      - key: DB_HOST
         fromDatabase:
           name: boozer-postgres
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: boozer-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: boozer-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: boozer-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: boozer-postgres
+          property: password
       - key: JWT_SECRET
         generateValue: true
       - key: BOOZER_KYC_MIN_LEGAL_AGE
