@@ -7,7 +7,7 @@ services:
   # 1. Spring Boot 3.3 (Java 21) Modular Monolith Backend
   - type: web
     name: boozer-backend
-    env: docker
+    runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     region: singapore # Lowest latency to India (~45ms)

@@ -51,27 +51,28 @@ public class RideService {
 
     public List<RideEstimateDto> getEstimates(double pickupLat, double pickupLng, double dropLat, double dropLng) {
         List<RideEstimateDto> estimates = new ArrayList<>();
+        BigDecimal voucherAmount = new BigDecimal("150.00");
 
         // Uber estimate
-        var uberEst = uberRideProvider.estimateFare(pickupLat, pickupLng, dropLat, dropLng);
+        var uberEst = uberRideProvider.estimateFare(pickupLat, pickupLng, dropLat, dropLng, voucherAmount);
         estimates.add(RideEstimateDto.builder()
-                .partner("UBER")
-                .vehicleType("Uber Go / Premier")
-                .estimatedFareInr(uberEst.getEstimatedFareInr())
-                .etaMinutes(uberEst.getEtaMinutes())
+                .partner(uberEst.partnerName())
+                .vehicleType(uberEst.vehicleType())
+                .estimatedFareInr(uberEst.estimatedTotalFare())
+                .etaMinutes(uberEst.etaMinutes())
                 .voucherApplicable(true)
-                .finalFareInr(uberEst.getEstimatedFareInr().subtract(new BigDecimal("150.00")).max(BigDecimal.ZERO))
+                .finalFareInr(uberEst.netPayableFare())
                 .build());
 
         // Ola estimate
-        var olaEst = olaRideProvider.estimateFare(pickupLat, pickupLng, dropLat, dropLng);
+        var olaEst = olaRideProvider.estimateFare(pickupLat, pickupLng, dropLat, dropLng, voucherAmount);
         estimates.add(RideEstimateDto.builder()
-                .partner("OLA")
-                .vehicleType("Ola Prime Sedan")
-                .estimatedFareInr(olaEst.getEstimatedFareInr())
-                .etaMinutes(olaEst.getEtaMinutes())
+                .partner(olaEst.partnerName())
+                .vehicleType(olaEst.vehicleType())
+                .estimatedFareInr(olaEst.estimatedTotalFare())
+                .etaMinutes(olaEst.etaMinutes())
                 .voucherApplicable(true)
-                .finalFareInr(olaEst.getEstimatedFareInr().subtract(new BigDecimal("150.00")).max(BigDecimal.ZERO))
+                .finalFareInr(olaEst.netPayableFare())
                 .build());
 
         return estimates;
