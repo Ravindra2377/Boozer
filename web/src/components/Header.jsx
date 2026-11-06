@@ -165,7 +165,7 @@ export function Header({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {(user.fullName || user.name || '').split(' ')[0]}
+                {(user?.fullName || user?.name || user?.phone || 'User').split(' ')[0]}
               </span>
             </div>
 

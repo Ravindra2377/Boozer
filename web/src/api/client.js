@@ -33,21 +33,27 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 class ApiClient {
   constructor() {
-    this.token = localStorage.getItem('boozer_token') || null;
-    this.userId = localStorage.getItem('boozer_user_id') || INITIAL_USER.id;
+    const hasStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    this.token = hasStorage ? localStorage.getItem('boozer_token') : null;
+    this.userId = hasStorage ? (localStorage.getItem('boozer_user_id') || INITIAL_USER.id) : INITIAL_USER.id;
     this.isBackendAvailable = null;
   }
 
   setToken(token, userId) {
     this.token = token;
     this.userId = userId;
-    if (token) localStorage.setItem('boozer_token', token);
-    if (userId) localStorage.setItem('boozer_user_id', userId);
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      if (token) localStorage.setItem('boozer_token', token);
+      if (userId) localStorage.setItem('boozer_user_id', userId);
+    }
   }
 
   clearToken() {
     this.token = null;
-    localStorage.removeItem('boozer_token');
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      localStorage.removeItem('boozer_token');
+      localStorage.removeItem('boozer_user_id');
+    }
   }
 
   async request(path, options = {}) {

@@ -83,14 +83,14 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '1.4rem', fontWeight: 900, color: 'var(--color-ink)'
           }}>
-            {user.fullName.charAt(0)}
+            {(user?.fullName || user?.name || user?.phone || 'U').charAt(0).toUpperCase()}
           </div>
           <div>
             <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-cream)' }}>
-              {user.fullName}
+              {user?.fullName || user?.name || user?.phone || 'Boozer Member'}
             </h2>
             <p style={{ fontSize: '0.78rem', color: 'var(--color-cream-muted)' }}>
-              {user.phone} · DOB: 30 Apr 1995 ({user.calculatedAge} Years Old)
+              {user?.phone || '+91 98765 43210'} · DOB: {user?.dateOfBirth || '30 Apr 1995'} ({user?.calculatedAge || 29} Years Old)
             </p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
                 DigiLocker KYC Verified
               </strong>
               <p style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>
-                {user.documentType} ({user.maskedDocNumber})
+                {user?.documentType || 'DigiLocker DL'} ({user?.maskedDocNumber || 'DL-TS092015XXXX4819'})
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
               Safe Ride Wallet Balance
             </span>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-amber)' }}>
-              ₹{user.activeRideCredit.toFixed(2)}
+              ₹{(user?.activeRideCredit ?? 150).toFixed(2)}
             </h3>
           </div>
         </div>
@@ -159,7 +159,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
           <div>
             <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>Home / Delivery Zone</strong>
             <p style={{ fontSize: '0.75rem', color: 'var(--color-cream-muted)', marginTop: '2px' }}>
-              {user.deliveryAddress}
+              {user?.deliveryAddress || 'Villa 14, Silicon Meadows, Jubilee Hills, Hyderabad - 500033'}
             </p>
           </div>
         </div>
@@ -214,7 +214,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
       <div className="glass-card" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <h3 style={{ fontSize: '0.88rem', fontWeight: 800 }}>Account & Session</h3>
         <p style={{ fontSize: '0.74rem', color: 'var(--color-cream-muted)' }}>
-          Logged in as <strong>{user.phone || user.fullName}</strong> · 256-Bit Encrypted Session
+          Logged in as <strong>{user?.phone || user?.fullName || 'Verified Member'}</strong> · 256-Bit Encrypted Session
         </p>
 
         <button

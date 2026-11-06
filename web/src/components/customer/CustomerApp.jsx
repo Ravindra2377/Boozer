@@ -48,7 +48,16 @@ export function CustomerApp({
     });
     api.getProfile().then((userData) => {
       if (mounted && userData) {
-        setUser((prev) => ({ ...prev, ...userData }));
+        setUser((prev) => ({
+          ...INITIAL_USER,
+          ...prev,
+          ...userData,
+          activeRideCredit: userData?.activeRideCredit ?? prev?.activeRideCredit ?? 150.00,
+          deliveryAddress: userData?.deliveryAddress ?? prev?.deliveryAddress ?? INITIAL_USER.deliveryAddress,
+          calculatedAge: userData?.calculatedAge ?? prev?.calculatedAge ?? 29,
+          documentType: userData?.documentType ?? prev?.documentType ?? INITIAL_USER.documentType,
+          maskedDocNumber: userData?.maskedDocNumber ?? prev?.maskedDocNumber ?? INITIAL_USER.maskedDocNumber,
+        }));
       }
     });
     return () => { mounted = false; };
@@ -249,14 +258,16 @@ export function CustomerApp({
           user={user}
         />
 
-        <OnboardingKycModal
-          isOpen={isKycModalOpen}
-          onClose={() => setIsKycModalOpen(false)}
-          user={user}
-          onVerifyComplete={() => {
-            setUser({ ...user, kycStatus: 'VERIFIED' });
-          }}
-        />
+        {user && (
+          <OnboardingKycModal
+            isOpen={isKycModalOpen}
+            onClose={() => setIsKycModalOpen(false)}
+            user={user}
+            onVerifyComplete={() => {
+              setUser({ ...user, kycStatus: 'VERIFIED' });
+            }}
+          />
+        )}
       </div>
     </div>
   );

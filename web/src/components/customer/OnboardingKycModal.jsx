@@ -3,7 +3,7 @@ import { ShieldCheck, X, CheckCircle2, Lock, Smartphone, FileText, ArrowRight } 
 
 export function OnboardingKycModal({ isOpen, onClose, user, onVerifyComplete }) {
   const [step, setStep] = useState(1); // 1: Phone OTP, 2: DigiLocker Auth, 3: Verified Result
-  const [phone, setPhone] = useState(user.phone || '+91 98765 43210');
+  const [phone, setPhone] = useState(user?.phone || '+91 98765 43210');
   const [otp, setOtp] = useState('482194');
   const [docType, setDocType] = useState('DRIVING_LICENCE');
   const [isLoading, setIsLoading] = useState(false);
@@ -229,7 +229,7 @@ export function OnboardingKycModal({ isOpen, onClose, user, onVerifyComplete }) 
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--color-cream-muted)' }}>Verified Name:</span>
-                <strong style={{ color: 'var(--color-cream)' }}>{user.fullName}</strong>
+                <strong style={{ color: 'var(--color-cream)' }}>{user?.fullName || user?.name || 'Panvi'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--color-cream-muted)' }}>Calculated Age:</span>

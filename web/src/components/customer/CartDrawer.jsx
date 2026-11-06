@@ -74,7 +74,7 @@ export function CartDrawer({
               <div>
                 <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>Delivery Address</strong>
                 <p style={{ fontSize: '0.75rem', color: 'var(--color-cream-muted)', marginTop: '2px' }}>
-                  {user.deliveryAddress}
+                  {user?.deliveryAddress || 'Villa 14, Silicon Meadows, Jubilee Hills, Hyderabad - 500033'}
                 </p>
                 <span className="badge-teal" style={{ marginTop: '6px', display: 'inline-flex' }}>
                   Within 6.5km legal delivery perimeter
