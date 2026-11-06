@@ -78,20 +78,16 @@ export function OnboardingKycModal({ isOpen, onClose, user, onVerifyComplete }) 
   // Initiate DigiLocker OAuth session
   const handleInitiateOAuth = async () => {
     setIsLoading(true);
-    setTelemetryMessage('Connecting to Setu DigiLocker Gateway...');
+    setTelemetryMessage('Connecting to DigiLocker MeriPehchaan Gateway...');
     try {
       const session = await api.initiateDigiLocker(window.location.href);
       setOauthSession(session);
       setIsLoading(false);
-      const targetUrl = session?.url || session?.redirectUrl || 'https://dg-sandbox.setu.co/digilocker';
-      const isLive = session?.mode === 'LIVE_SETU';
+      const targetUrl = session?.url || session?.redirectUrl || 'https://digilocker.meripehchaan.gov.in/public/oauth2/1/authorize';
       const confirmed = window.confirm(
-        `Open ${isLive ? 'Live Setu' : 'Setu Sandbox'} DigiLocker Gateway?\n\nGateway URL:\n${targetUrl}\n\nClick OK to authorize via DigiLocker.`
+        `Open DigiLocker MeriPehchaan Gateway?\n\nGateway URL:\n${targetUrl}\n\nClick OK to authorize via DigiLocker.`
       );
       if (confirmed) {
-        if (isLive && session?.url) {
-          window.open(session.url, '_blank', 'width=520,height=720');
-        }
         handleExecuteVerification();
       }
     } catch {
