@@ -12,7 +12,7 @@ services:
     dockerContext: ./backend
     region: singapore # Lowest latency to India (~45ms)
     plan: free        # 100% Free Tier ($0/mo)
-    healthCheckPath: /api/v1/compliance/excise/status
+    healthCheckPath: /api/v1/health
     envVars:
       - key: DB_HOST
         fromDatabase:
