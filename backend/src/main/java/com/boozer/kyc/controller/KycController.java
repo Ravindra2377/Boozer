@@ -22,6 +22,7 @@ import java.util.UUID;
 public class KycController {
 
     private final KycService kycService;
+    private final SetuDigiLockerService setuDigiLockerService;
     private final UserRepository userRepository;
 
     private UUID resolveUserId(String headerUserId) {
@@ -45,15 +46,34 @@ public class KycController {
     }
 
     @PostMapping("/initiate")
-    public ResponseEntity<ApiResponse<Map<String, String>>> initiateDigiLocker(
-            @RequestHeader(value = "X-User-Id", required = false) String headerUserId
+    public ResponseEntity<ApiResponse<Map<String, Object>>> initiateDigiLocker(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestParam(value = "redirectUrl", required = false) String redirectUrl
     ) {
         UUID userId = resolveUserId(headerUserId);
-        String redirectUrl = "https://digilocker.meripehchaan.gov.in/public/oauth2/1/authorize?client_id=BOOZER_SANDBOX&state=" + userId;
+        Map<String, Object> session = setuDigiLockerService.initiateSession(userId, redirectUrl);
         return ResponseEntity.ok(ApiResponse.success(
-                "DigiLocker session initiated",
-                Map.of("redirectUrl", redirectUrl, "sessionId", UUID.randomUUID().toString())
+                session.get("message") != null ? session.get("message").toString() : "DigiLocker session initiated",
+                session
         ));
+    }
+
+    @PostMapping("/setu/initiate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> initiateSetu(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestBody(required = false) Map<String, String> body
+    ) {
+        UUID userId = resolveUserId(headerUserId);
+        String redirectUrl = body != null ? body.get("redirectUrl") : null;
+        Map<String, Object> session = setuDigiLockerService.initiateSession(userId, redirectUrl);
+        return ResponseEntity.ok(ApiResponse.success("Setu DigiLocker gateway ready", session));
+    }
+
+    @PostMapping("/setu/webhook")
+    public ResponseEntity<ApiResponse<String>> handleSetuWebhook(
+            @RequestBody Map<String, Object> payload
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Webhook received and logged", "ACK"));
     }
 
     @PostMapping("/verify")

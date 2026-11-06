@@ -138,11 +138,15 @@ class ApiClient {
     return live || MOCK_KYC_RECORD;
   }
 
-  async initiateDigiLocker() {
-    const live = await this.request('/kyc/initiate', { method: 'POST' });
+  async initiateDigiLocker(redirectUrl) {
+    const path = redirectUrl ? `/kyc/initiate?redirectUrl=${encodeURIComponent(redirectUrl)}` : '/kyc/initiate';
+    const live = await this.request(path, { method: 'POST' });
     return live || {
+      id: 'setu_demo_' + Date.now().toString(36),
+      url: 'https://dg-sandbox.setu.co/digilocker/simulate',
       redirectUrl: 'https://digilocker.meripehchaan.gov.in/public/oauth2/1/authorize?mock=true',
       sessionId: 'dgl-mock-session-7819',
+      mode: 'SANDBOX_SIMULATOR',
     };
   }
 

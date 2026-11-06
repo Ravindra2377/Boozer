@@ -45,9 +45,14 @@ boozer:
     refresh-token-expiration-ms: 604800000 # 7 days
 
   kyc:
-    provider: DIGILOCKER
+    provider: ${KYC_PROVIDER:SETU_DIGILOCKER}
     api-key: ${DIGILOCKER_API_KEY:mock_digilocker_key}
     min-legal-age: 21
+    setu:
+      base-url: ${SETU_BASE_URL:https://dg-sandbox.setu.co/api}
+      client-id: ${SETU_CLIENT_ID:setu_sandbox_client_id}
+      client-secret: ${SETU_CLIENT_SECRET:setu_sandbox_client_secret}
+      product-instance-id: ${SETU_PRODUCT_INSTANCE_ID:setu_sandbox_bridge_id}
 
   payments:
     razorpay:
