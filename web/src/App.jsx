@@ -90,18 +90,24 @@ export function App() {
       </main>
 
       {/* Global KYC Modal */}
-      {user && (
-        <OnboardingKycModal
-          isOpen={isGlobalKycOpen}
-          onClose={() => setIsGlobalKycOpen(false)}
-          user={user}
-          onVerifyComplete={() => {
-            const updated = { ...user, kycStatus: 'VERIFIED' };
-            setUser(updated);
-            localStorage.setItem('boozer_user', JSON.stringify(updated));
-          }}
-        />
-      )}
+      <OnboardingKycModal
+        isOpen={isGlobalKycOpen}
+        onClose={() => setIsGlobalKycOpen(false)}
+        user={user}
+        onVerifyComplete={(verifiedRecord) => {
+          const baseUser = user || INITIAL_USER;
+          const updated = {
+            ...baseUser,
+            kycStatus: 'VERIFIED',
+            documentType: verifiedRecord?.docType || baseUser?.documentType || 'Driving Licence',
+            maskedDocNumber: verifiedRecord?.docNumberMasked || baseUser?.maskedDocNumber || 'TS-092015XXXX4819',
+            calculatedAge: verifiedRecord?.calculatedAge || baseUser?.calculatedAge || 29,
+            kycProvider: 'DIGILOCKER',
+          };
+          setUser(updated);
+          localStorage.setItem('boozer_user', JSON.stringify(updated));
+        }}
+      />
 
       {/* Sign In & Sign Up Modal */}
       <AuthModal

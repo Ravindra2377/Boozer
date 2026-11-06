@@ -49,6 +49,9 @@ public class KycRecordEntity {
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
+    @Column(name = "calculated_age")
+    private Integer calculatedAge;
+
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;
 

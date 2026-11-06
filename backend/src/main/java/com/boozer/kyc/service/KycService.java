@@ -64,6 +64,7 @@ public class KycService {
                 .providerRef("DGL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .docNumberMasked(maskedDocNumber)
                 .ageVerified(isEligible)
+                .calculatedAge(age)
                 .dateOfBirth(dateOfBirth)
                 .verifiedAt(isEligible ? OffsetDateTime.now() : null)
                 .status(status)
