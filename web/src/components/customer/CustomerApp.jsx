@@ -16,7 +16,13 @@ import {
 } from '../../data/mockData';
 import { api } from '../../api/client';
 
-export function CustomerApp({ isFrameMode }) {
+export function CustomerApp({
+  isFrameMode,
+  user: propUser,
+  setUser: propSetUser,
+  onSignOut,
+  onOpenAuthModal
+}) {
   const [showSplash, setShowSplash] = useState(false);
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'orders', 'ride', 'safety', 'profile'
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -27,7 +33,10 @@ export function CustomerApp({ isFrameMode }) {
   ]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
-  const [user, setUser] = useState(INITIAL_USER);
+  const [internalUser, setInternalUser] = useState(INITIAL_USER);
+
+  const user = propUser !== undefined ? propUser : internalUser;
+  const setUser = propSetUser || setInternalUser;
 
   // Sync products and user from API (with automatic fallback to mockData)
   useEffect(() => {
@@ -170,6 +179,8 @@ export function CustomerApp({ isFrameMode }) {
               <ProfileScreen
                 user={user}
                 onOpenKycModal={() => setIsKycModalOpen(true)}
+                onSignOut={onSignOut}
+                onOpenAuthModal={onOpenAuthModal}
               />
             )}
 

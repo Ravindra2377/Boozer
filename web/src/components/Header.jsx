@@ -1,5 +1,7 @@
 import React from 'react';
-import { ShieldCheck, Smartphone, Store, ShieldAlert, Clock, ShoppingBag, Eye } from 'lucide-react';
+import {
+  ShieldCheck, Smartphone, Store, ShieldAlert, Clock, ShoppingBag, Eye, LogOut, LogIn, User
+} from 'lucide-react';
 
 export function Header({
   activeView,
@@ -9,7 +11,10 @@ export function Header({
   cartCount,
   onOpenCart,
   onOpenKycModal,
-  kycVerified
+  kycVerified,
+  user,
+  onSignOut,
+  onOpenAuthModal,
 }) {
   return (
     <header className="platform-top-bar">
@@ -117,6 +122,90 @@ export function Header({
           <Clock size={13} color="var(--color-gold)" />
           <span>Excise Hours: <strong>10 AM – 10 PM</strong></span>
         </div>
+
+        {/* User Authentication Status & Sign Out */}
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '4px 10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 'var(--radius-full)',
+              }}
+              title={`Logged in as ${user.fullName || user.name}`}
+            >
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
+                  color: '#09090E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 900,
+                }}
+              >
+                {(user.fullName || user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  color: 'var(--color-cream)',
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {(user.fullName || user.name || '').split(' ')[0]}
+              </span>
+            </div>
+
+            <button
+              onClick={onSignOut}
+              className="view-mode-btn"
+              style={{
+                background: 'rgba(239, 68, 68, 0.14)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: '#FCA5A5',
+                gap: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+              }}
+              title="Sign Out of BOOZER"
+            >
+              <LogOut size={14} />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenAuthModal}
+            className="view-mode-btn"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
+              border: 'none',
+              color: '#09090E',
+              fontWeight: 800,
+              gap: '6px',
+              padding: '6px 14px',
+              boxShadow: '0 2px 14px rgba(231, 161, 61, 0.35)',
+              cursor: 'pointer',
+            }}
+            title="Sign In or Register"
+          >
+            <LogIn size={15} />
+            <span>Sign In / Register</span>
+          </button>
+        )}
       </div>
     </header>
   );

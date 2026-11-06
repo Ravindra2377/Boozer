@@ -1,9 +1,54 @@
 import React from 'react';
 import {
-  ShieldCheck, User, MapPin, Car, Clock, Receipt, CheckCircle2, ChevronRight
+  ShieldCheck, User, MapPin, Car, Clock, Receipt, CheckCircle2, ChevronRight, LogOut, LogIn, Sparkles
 } from 'lucide-react';
 
-export function ProfileScreen({ user, onOpenKycModal }) {
+export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal }) {
+  if (!user) {
+    return (
+      <div className="screen-scroll-body">
+        <div className="glass-card" style={{ textAlign: 'center', padding: '32px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '50%',
+            background: 'rgba(231, 161, 61, 0.15)', border: '1px solid var(--color-gold)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--color-gold)'
+          }}>
+            <User size={30} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-cream)' }}>
+              Welcome, Guest Explorer
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-cream-muted)', marginTop: '4px', maxWidth: '280px' }}>
+              Sign in or create an account to unlock statutory doorstep delivery, DigiLocker KYC, and ₹150 Safe Ride credit.
+            </p>
+          </div>
+          <button
+            onClick={onOpenAuthModal}
+            style={{
+              marginTop: '6px',
+              padding: '12px 24px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
+              color: '#09090E',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 18px rgba(231, 161, 61, 0.35)'
+            }}
+          >
+            <LogIn size={16} />
+            <span>Sign In / Create Account</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
   const pastOrders = [
     {
       id: "BZ-20261104-1849",
@@ -163,6 +208,46 @@ export function ProfileScreen({ user, onOpenKycModal }) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Account & Session Controls */}
+      <div className="glass-card" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <h3 style={{ fontSize: '0.88rem', fontWeight: 800 }}>Account & Session</h3>
+        <p style={{ fontSize: '0.74rem', color: 'var(--color-cream-muted)' }}>
+          Logged in as <strong>{user.phone || user.fullName}</strong> · 256-Bit Encrypted Session
+        </p>
+
+        <button
+          onClick={onSignOut}
+          style={{
+            marginTop: '4px',
+            width: '100%',
+            padding: '12px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#FCA5A5',
+            fontSize: '0.84rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+          }}
+        >
+          <LogOut size={16} />
+          <span>Sign Out of Boozer</span>
+        </button>
       </div>
     </div>
   );
