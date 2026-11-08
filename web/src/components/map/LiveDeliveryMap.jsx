@@ -5,6 +5,7 @@ import {
   ShieldCheck, Crosshair, Navigation
 } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
+import { addDarkTileLayer } from './mapTiles';
 
 /**
  * High-performance interactive Delivery Tracking Map built with Leaflet
@@ -88,12 +89,8 @@ export function LiveDeliveryMap({
     });
     mapInstanceRef.current = map;
 
-    // CartoDB Dark Matter tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
+    // Attach dark mode tile layer (CARTO / Stadia / Mapbox / Esri Dark Canvas zero-key fallback)
+    addDarkTileLayer(map);
 
     // 1. Statutory 6.5 km Excise Geofence Circle
     const geofence = L.circle(store.coords, {

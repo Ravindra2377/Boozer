@@ -4,6 +4,7 @@ import {
   Crosshair, Maximize2, Minimize2, Plus, Minus, MapPin
 } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
+import { addDarkTileLayer } from './mapTiles';
 
 /**
  * Interactive Safe Ride Home Map built with Leaflet and CartoDB Dark Matter.
@@ -49,12 +50,8 @@ export function SafeRideMap({
     });
     mapInstanceRef.current = map;
 
-    // CartoDB Dark Matter tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
+    // Attach dark mode tile layer (CARTO / Stadia / Mapbox / Esri Dark Canvas zero-key fallback)
+    addDarkTileLayer(map);
 
     // Safe Ride Route Polyline Glow Underlay
     L.polyline(routeWaypoints, {
