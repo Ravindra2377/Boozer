@@ -6,7 +6,7 @@ import {
 import { MOCK_RIDE_PARTNERS } from '../../data/mockData';
 import { SafeRideMap } from '../map/SafeRideMap';
 
-export function RideBookingScreen({ user, onOpenSos }) {
+export function RideBookingScreen({ user, onOpenSos, isFrameMode = true }) {
   const [selectedPartner, setSelectedPartner] = useState(MOCK_RIDE_PARTNERS[0]);
   const [isBooked, setIsBooked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -98,6 +98,7 @@ export function RideBookingScreen({ user, onOpenSos }) {
         selectedPartner={selectedPartner}
         onSelectPartner={handleSelectPartnerFromMap}
         isBooked={isBooked}
+        isFrameMode={isFrameMode}
         height="260px"
       />
 

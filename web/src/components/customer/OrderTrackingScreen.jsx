@@ -10,7 +10,8 @@ export function OrderTrackingScreen({
   order,
   onNavigateToRides,
   onAdvanceOrderState,
-  city = "Hyderabad"
+  city = "Hyderabad",
+  isFrameMode = true
 }) {
   const [doorstepOtp, setDoorstepOtp] = useState('');
   const [doorstepError, setDoorstepError] = useState('');
@@ -54,13 +55,14 @@ export function OrderTrackingScreen({
         </div>
       </div>
 
-      {/* Live Interactive Delivery Route Map (Leaflet × CartoDB Dark Matter) */}
+      {/* Live Interactive Delivery Route Map */}
       <LiveDeliveryMap
         order={order}
         city={city}
         height="300px"
         riderName="Rohit Kumar"
         riderVehicle="KA 01 AB 1234"
+        isFrameMode={isFrameMode}
       />
 
       {/* Delivery Partner Card (Matching Image 1: "Rohit Kumar ★ 4.9 · KA 01 AB 1234") */}

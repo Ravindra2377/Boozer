@@ -15,7 +15,8 @@ export function SafeRideMap({
   selectedPartner,
   onSelectPartner,
   isBooked = false,
-  height = "260px"
+  height = "260px",
+  isFrameMode = true
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -136,18 +137,63 @@ export function SafeRideMap({
     // Initial fit
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
 
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
+    const t1 = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 120);
+
+    const t2 = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 450);
+
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    const handleWindowResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+    window.addEventListener('resize', handleWindowResize);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', handleWindowResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
   }, [city, pickup, dropoff, routeWaypoints, nearbyCabs]);
+
+  // Immediate re-invalidation when frame mode expands/contracts
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const t = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        const bounds = L.latLngBounds(routeWaypoints);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 180);
+    return () => clearTimeout(t);
+  }, [isFrameMode, routeWaypoints]);
 
   // Helper to construct custom HTML Cab Icon
   const createCabIcon = (cab, isSelected) => {

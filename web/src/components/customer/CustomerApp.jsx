@@ -169,6 +169,7 @@ export function CustomerApp({
               <OrderTrackingScreen
                 order={order}
                 city={user?.city || "Hyderabad"}
+                isFrameMode={isFrameMode}
                 onNavigateToRides={() => setActiveTab('ride')}
                 onAdvanceOrderState={handleAdvanceOrderState}
               />
@@ -177,6 +178,7 @@ export function CustomerApp({
             {activeTab === 'ride' && (
               <RideBookingScreen
                 user={user}
+                isFrameMode={isFrameMode}
                 onOpenSos={() => setActiveTab('safety')}
               />
             )}

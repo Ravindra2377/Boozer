@@ -17,7 +17,8 @@ export function LiveDeliveryMap({
   height = "320px",
   riderName = "Rohit Kumar",
   riderVehicle = "KA 01 AB 1234",
-  onArrivedDoorstep
+  onArrivedDoorstep,
+  isFrameMode = true
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -211,21 +212,67 @@ export function LiveDeliveryMap({
     riderMarkerRef.current = riderMarker;
 
     // Initial fit
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
 
-    // Handle initial render sizing
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
+    // Handle initial render sizing with staggered invalidations
+    const t1 = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 120);
+
+    const t2 = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 450);
+
+    // Auto-detect container resizing (e.g., toggling between phone frame mode & full-width desktop mode)
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    const handleWindowResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+    window.addEventListener('resize', handleWindowResize);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', handleWindowResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
   }, [city, store, customer, routeWaypoints]);
+
+  // Immediate re-invalidation when frame mode expands or contracts
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const t = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        const bounds = L.latLngBounds(routeWaypoints);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 180);
+    return () => clearTimeout(t);
+  }, [isFrameMode, routeWaypoints]);
 
   // Synchronize Rider Position when order status changes or time ticks
   useEffect(() => {
