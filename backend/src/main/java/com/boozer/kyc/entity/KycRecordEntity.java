@@ -62,7 +62,7 @@ public class KycRecordEntity {
     @Column(name = "failure_reason")
     private String failureReason;
 
-    @Column(name = "raw_hash", length = 64)
+    @Column(name = "raw_hash", length = 255)
     private String rawHash;
 
     @CreationTimestamp
