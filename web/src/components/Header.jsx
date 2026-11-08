@@ -27,21 +27,21 @@ export function Header({
               <path
                 d="M6 4 L34 4 L31 40 C31 42 29 44 27 44 L13 44 C11 44 9 42 9 40 Z"
                 fill="none"
-                stroke="#E7A13D"
+                stroke="var(--color-gold)"
                 strokeWidth="2.5"
                 strokeLinejoin="round"
               />
               <path
                 d="M8.5 18 L31.5 18 L29.5 39 C29.5 41 28 42 26 42 L14 42 C12 42 10.5 41 10.5 39 Z"
-                fill="#E7A13D"
+                fill="var(--color-gold)"
               />
               <rect x="14" y="24" width="10" height="10" rx="1.5" fill="rgba(255,255,255,0.4)" />
             </svg>
           </span>
           <span>ZER</span>
         </div>
-        <span style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)', marginLeft: '6px', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '8px' }}>
-          Midnight Gold × Neon Luxury
+        <span style={{ fontSize: '0.68rem', color: 'var(--color-cream-muted)', marginLeft: '8px', borderLeft: '1px solid var(--color-card-border)', paddingLeft: '8px', letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Express Delivery · Telangana
         </span>
       </div>
 
@@ -99,10 +99,10 @@ export function Header({
 
             <button
               className="view-mode-btn"
-              style={{ background: 'rgba(231, 161, 61, 0.15)', color: 'var(--color-gold)', position: 'relative' }}
+              style={{ background: '#22222E', color: 'var(--color-gold)', position: 'relative', border: '1px solid var(--color-card-border)' }}
               onClick={onOpenCart}
             >
-              <ShoppingBag size={17} />
+              <ShoppingBag size={15} />
               <span>Cart</span>
               {cartCount > 0 && (
                 <span style={{
@@ -132,32 +132,32 @@ export function Header({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '4px 10px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#1A1A22',
+                border: '1px solid var(--color-card-border)',
                 borderRadius: 'var(--radius-full)',
               }}
               title={`Logged in as ${user.fullName || user.name}`}
             >
               <div
                 style={{
-                  width: '24px',
-                  height: '24px',
+                  width: '22px',
+                  height: '22px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
-                  color: '#09090E',
+                  background: 'var(--color-gold)',
+                  color: '#0C0C0F',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 900,
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
                 }}
               >
                 {(user.fullName || user.name || 'U').charAt(0).toUpperCase()}
               </div>
               <span
                 style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
                   color: 'var(--color-cream)',
                   maxWidth: '120px',
                   overflow: 'hidden',
@@ -173,36 +173,31 @@ export function Header({
               onClick={onSignOut}
               className="view-mode-btn"
               style={{
-                background: 'rgba(239, 68, 68, 0.14)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                color: '#FCA5A5',
+                background: 'rgba(214, 69, 69, 0.12)',
+                border: '1px solid rgba(214, 69, 69, 0.3)',
+                color: '#F87171',
                 gap: '6px',
                 padding: '6px 12px',
                 cursor: 'pointer',
               }}
               title="Sign Out of BOOZER"
             >
-              <LogOut size={14} />
+              <LogOut size={13} />
               <span>Sign Out</span>
             </button>
           </div>
         ) : (
           <button
             onClick={onOpenAuthModal}
-            className="view-mode-btn"
+            className="btn-primary"
             style={{
-              background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
-              border: 'none',
-              color: '#09090E',
-              fontWeight: 800,
-              gap: '6px',
               padding: '6px 14px',
-              boxShadow: '0 2px 14px rgba(231, 161, 61, 0.35)',
+              fontSize: '0.8rem',
               cursor: 'pointer',
             }}
             title="Sign In or Register"
           >
-            <LogIn size={15} />
+            <LogIn size={14} />
             <span>Sign In / Register</span>
           </button>
         )}

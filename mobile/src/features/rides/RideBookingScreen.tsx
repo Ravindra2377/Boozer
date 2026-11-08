@@ -101,7 +101,7 @@ export const RideBookingScreen: React.FC = () => {
             >
               <View style={styles.partnerLeft}>
                 <View style={styles.carIconBox}>
-                  <Text style={{ fontSize: 18 }}>🚘</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.gold }}>CAB</Text>
                 </View>
                 <View>
                   <Text style={styles.partnerName}>{p.name}</Text>

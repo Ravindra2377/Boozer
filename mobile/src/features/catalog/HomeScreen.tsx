@@ -64,12 +64,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { items, addItem } = useCartStore();
 
   const categories = [
-    { key: 'ALL', label: 'All', icon: '✨' },
-    { key: 'BEER', label: 'Beer', icon: '🍺' },
-    { key: 'WHISKY', label: 'Whisky', icon: '🥃' },
-    { key: 'VODKA', label: 'Vodka', icon: '🍸' },
-    { key: 'RUM', label: 'Rum', icon: '🍹' },
-    { key: 'WINE', label: 'Wine', icon: '🍷' },
+    { key: 'ALL', label: 'All' },
+    { key: 'BEER', label: 'Beer' },
+    { key: 'WHISKY', label: 'Whisky' },
+    { key: 'VODKA', label: 'Vodka' },
+    { key: 'RUM', label: 'Rum' },
+    { key: 'WINE', label: 'Wine' },
   ];
 
   const cartCount = items.reduce((acc, i) => acc + i.quantity, 0);
@@ -79,10 +79,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Top Profile & Location Bar */}
       <View style={styles.topHeader}>
         <View>
-          <Text style={styles.greetingText}>Good evening, Panvi 👋</Text>
+          <Text style={styles.greetingText}>Good evening, Panvi</Text>
           <View style={styles.locationRow}>
-            <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.locationText}>Hyderabad ⌄</Text>
+            <Text style={styles.locationLabel}>DELIVERING TO</Text>
+            <Text style={styles.locationText}>Hyderabad ▾</Text>
           </View>
         </View>
 
@@ -98,9 +98,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Search Bar */}
       <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
-          placeholder="Search for your favourite drink..."
+          placeholder="Search by brand, category, or vintage..."
           placeholderTextColor={colors.creamMuted}
           style={styles.searchInput}
           value={search}
@@ -108,25 +107,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         />
       </View>
 
-      {/* Hero Ride Banner */}
+      {/* Hero Ride Voucher Banner */}
       <View style={styles.heroBanner}>
         <View style={styles.heroTextContainer}>
           <View style={styles.safetyTag}>
-            <Text style={styles.safetyTagText}>🛡 Safety First</Text>
+            <Text style={styles.safetyTagText}>RESPONSIBLE TRANSIT</Text>
           </View>
-          <Text style={styles.heroTitle}>Get a Ride with Every Order</Text>
+          <Text style={styles.heroTitle}>₹150 Safe Ride Credit Included</Text>
           <Text style={styles.heroDesc}>
-            Included ₹150 ride voucher on Uber and Ola for a safe ride home.
+            Complimentary voucher applied on Uber & Ola for a safe ride home.
           </Text>
           <TouchableOpacity onPress={onNavigateToRide} style={styles.heroCta}>
-            <Text style={styles.heroCtaText}>Explore Rides →</Text>
+            <Text style={styles.heroCtaText}>View Ride Credit →</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.carGraphic}>
-          <Text style={styles.carEmoji}>🚘</Text>
+        <View style={styles.voucherBadge}>
+          <Text style={styles.voucherBadgeAmount}>₹150</Text>
+          <Text style={styles.voucherBadgeSub}>VOUCHER</Text>
         </View>
-        <View style={styles.amberRoadTrail} />
       </View>
 
       {/* Categories Row */}
@@ -137,12 +136,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <TouchableOpacity
               key={c.key}
               onPress={() => setSelectedCategory(c.key)}
-              style={styles.categoryItem}
+              style={[styles.categoryPill, isActive && styles.categoryPillActive]}
             >
-              <View style={[styles.categoryIconBox, isActive && styles.categoryIconBoxActive]}>
-                <Text style={styles.categoryIconText}>{c.icon}</Text>
-              </View>
-              <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
+              <Text style={[styles.categoryPillText, isActive && styles.categoryPillTextActive]}>
                 {c.label}
               </Text>
             </TouchableOpacity>
@@ -214,11 +210,14 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     marginTop: 2,
   },
-  locationIcon: {
-    fontSize: 12,
+  locationLabel: {
+    color: colors.creamSubtle,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   locationText: {
     color: colors.gold,
@@ -226,28 +225,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   avatarButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 6,
   },
   avatarText: {
     color: colors.midnight,
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 15,
+    fontWeight: '800',
   },
   cartBadge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: colors.purpleLight,
+    backgroundColor: colors.crimson,
     borderRadius: 9,
     width: 18,
     height: 18,
@@ -257,49 +251,43 @@ const styles = StyleSheet.create({
   cartBadgeText: {
     color: '#fff',
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(22, 17, 32, 0.8)',
+    backgroundColor: '#16161D',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 25,
-    paddingHorizontal: 16,
+    borderColor: colors.cardBorder,
+    borderRadius: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     marginBottom: 16,
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     color: colors.cream,
-    fontSize: 13.5,
+    fontSize: 13,
   },
   heroBanner: {
-    backgroundColor: '#181226',
+    backgroundColor: '#181822',
     borderWidth: 1,
-    borderColor: colors.cardBorderActive,
-    borderRadius: 20,
+    borderColor: 'rgba(197, 160, 89, 0.25)',
+    borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
     marginBottom: 20,
   },
   heroTextContainer: {
-    maxWidth: '65%',
+    maxWidth: '70%',
   },
   safetyTag: {
-    backgroundColor: 'rgba(231, 161, 61, 0.15)',
+    backgroundColor: 'rgba(197, 160, 89, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(231, 161, 61, 0.4)',
-    borderRadius: 12,
+    borderColor: 'rgba(197, 160, 89, 0.3)',
+    borderRadius: 10,
     paddingVertical: 2,
     paddingHorizontal: 8,
     alignSelf: 'flex-start',
@@ -307,14 +295,15 @@ const styles = StyleSheet.create({
   },
   safetyTagText: {
     color: colors.gold,
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
   heroTitle: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.cream,
+    fontSize: 15,
     fontWeight: '800',
-    lineHeight: 20,
+    lineHeight: 19,
     marginBottom: 4,
   },
   heroDesc: {
@@ -325,7 +314,7 @@ const styles = StyleSheet.create({
   heroCta: {
     marginTop: 8,
     backgroundColor: colors.gold,
-    borderRadius: 15,
+    borderRadius: 6,
     paddingVertical: 5,
     paddingHorizontal: 10,
     alignSelf: 'flex-start',
@@ -333,62 +322,53 @@ const styles = StyleSheet.create({
   heroCtaText: {
     color: colors.midnight,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
   },
-  carGraphic: {
-    width: 60,
-    height: 60,
+  voucherBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#1D1D28',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  carEmoji: {
-    fontSize: 42,
+  voucherBadgeAmount: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: '900',
   },
-  amberRoadTrail: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: colors.gold,
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
+  voucherBadgeSub: {
+    color: colors.creamMuted,
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   categoryScroll: {
     marginBottom: 20,
   },
-  categoryItem: {
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  categoryIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: '#191326',
+  categoryPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#181822',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 5,
+    borderColor: colors.cardBorder,
+    marginRight: 8,
   },
-  categoryIconBoxActive: {
-    backgroundColor: colors.gold,
+  categoryPillActive: {
+    backgroundColor: '#252535',
     borderColor: colors.gold,
   },
-  categoryIconText: {
-    fontSize: 22,
-  },
-  categoryLabel: {
+  categoryPillText: {
     color: colors.creamMuted,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
-  categoryLabelActive: {
+  categoryPillTextActive: {
     color: colors.gold,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -398,7 +378,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.cream,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
   },
   seeAllText: {
@@ -413,18 +393,18 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: '48%',
-    backgroundColor: '#151122',
+    backgroundColor: '#16161D',
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 18,
+    borderRadius: 14,
     padding: 10,
     marginBottom: 12,
   },
   productImage: {
     width: '100%',
     height: 120,
-    borderRadius: 10,
-    backgroundColor: '#0A0812',
+    borderRadius: 8,
+    backgroundColor: '#111116',
     marginBottom: 8,
   },
   abvTag: {

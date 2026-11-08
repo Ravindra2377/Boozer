@@ -18,7 +18,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
           </div>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-cream)' }}>
-              Welcome, Guest Explorer
+              Sign In to Boozer
             </h2>
             <p style={{ fontSize: '0.8rem', color: 'var(--color-cream-muted)', marginTop: '4px', maxWidth: '280px' }}>
               Sign in or create an account to unlock statutory doorstep delivery, DigiLocker KYC, and ₹150 Safe Ride credit.
@@ -26,23 +26,14 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
           </div>
           <button
             onClick={onOpenAuthModal}
+            className="btn-primary"
             style={{
               marginTop: '6px',
-              padding: '12px 24px',
-              borderRadius: 'var(--radius-sm)',
-              background: 'linear-gradient(135deg, var(--color-gold) 0%, #D48924 100%)',
-              color: '#09090E',
-              fontWeight: 800,
-              fontSize: '0.9rem',
-              border: 'none',
+              padding: '10px 20px',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 18px rgba(231, 161, 61, 0.35)'
             }}
           >
-            <LogIn size={16} />
+            <LogIn size={15} />
             <span>Sign In / Create Account</span>
           </button>
         </div>

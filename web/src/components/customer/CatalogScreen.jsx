@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, ShieldCheck, MapPin, ChevronDown, Bell, Plus, Check,
-  Sparkles, ArrowRight, Car, Clock, AlertTriangle, CheckCircle2
+  ArrowRight, Car, Clock, AlertTriangle, CheckCircle2,
+  LayoutGrid, Beer, Wine, Flame, GlassWater
 } from 'lucide-react';
 import { api } from '../../api/client';
 
@@ -37,12 +38,12 @@ export function CatalogScreen({
   }, []);
 
   const categories = [
-    { key: 'ALL', label: 'All', icon: '✨' },
-    { key: 'BEER', label: 'Beer', icon: '🍺' },
-    { key: 'WHISKY', label: 'Whisky', icon: '🥃' },
-    { key: 'VODKA', label: 'Vodka', icon: '🍸' },
-    { key: 'RUM', label: 'Rum', icon: '🍹' },
-    { key: 'WINE', label: 'Wine', icon: '🍷' }
+    { key: 'ALL', label: 'All', icon: <LayoutGrid size={18} /> },
+    { key: 'BEER', label: 'Beer', icon: <Beer size={18} /> },
+    { key: 'WHISKY', label: 'Whisky', icon: <Flame size={18} /> },
+    { key: 'VODKA', label: 'Vodka', icon: <GlassWater size={18} /> },
+    { key: 'RUM', label: 'Rum', icon: <Flame size={18} /> },
+    { key: 'WINE', label: 'Wine', icon: <Wine size={18} /> }
   ];
 
   const handleAddWithPour = (prod) => {
@@ -67,11 +68,11 @@ export function CatalogScreen({
 
   return (
     <div className="screen-scroll-body" style={{ position: 'relative' }}>
-      {/* Top Profile Header (Matching Image 1: "Good evening, Panvi 👋") */}
+      {/* Top Profile Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-cream)' }}>
-            Good evening, Panvi 👋
+            Good evening, Panvi
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--color-cream-muted)', marginTop: '2px' }}>
             <MapPin size={13} color="var(--color-gold)" />
@@ -82,17 +83,17 @@ export function CatalogScreen({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.06)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-cream)'
+            width: '36px', height: '36px', borderRadius: '50%', background: '#1A1A22',
+            border: '1px solid var(--color-card-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-cream-muted)'
           }}>
-            <Bell size={17} />
+            <Bell size={16} />
           </div>
           <div style={{
-            width: '38px', height: '38px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-gold) 0%, #B87820 100%)',
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'var(--color-gold)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-midnight)',
-            boxShadow: '0 0 10px rgba(231, 161, 61, 0.4)'
+            fontSize: '0.9rem', fontWeight: 800, color: '#0C0C0F'
           }}>
             P
           </div>
@@ -102,7 +103,7 @@ export function CatalogScreen({
       {/* State Excise & Geofence Compliance Bar */}
       {exciseStatus.isDryDay ? (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)',
+          background: 'rgba(214, 69, 69, 0.12)', border: '1px solid rgba(214, 69, 69, 0.3)',
           borderRadius: 'var(--radius-md)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px'
         }}>
           <AlertTriangle size={18} color="var(--color-crimson)" />
@@ -117,11 +118,11 @@ export function CatalogScreen({
         </div>
       ) : (
         <div style={{
-          background: 'rgba(36, 141, 120, 0.10)', border: '1px solid rgba(36, 141, 120, 0.3)',
+          background: 'rgba(30, 130, 112, 0.10)', border: '1px solid rgba(30, 130, 112, 0.25)',
           borderRadius: 'var(--radius-md)', padding: '8px 12px', display: 'flex',
           justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-teal)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#34D399' }}>
             <CheckCircle2 size={13} />
             <span><strong>Excise Zone 2</strong> · {exciseStatus.deliveryDistanceKm} km inside 6.5 km boundary</span>
           </div>
@@ -132,12 +133,12 @@ export function CatalogScreen({
         </div>
       )}
 
-      {/* Search Bar (Matching Image 1: "Search for your favourite drink...") */}
+      {/* Search Bar */}
       <div className="glow-search-bar">
-        <Search size={18} color="var(--color-gold)" />
+        <Search size={16} color="var(--color-cream-muted)" />
         <input
           type="text"
-          placeholder="Search for your favourite drink..."
+          placeholder="Search by brand, category, or vintage..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -151,53 +152,52 @@ export function CatalogScreen({
         )}
       </div>
 
-      {/* Hero Ride Banner (Matching Image 1: "Get a Ride with Every Order · Safety First") */}
+      {/* Hero Ride Voucher Banner */}
       <div className="hero-ride-banner">
         <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ maxWidth: '62%' }}>
+          <div style={{ maxWidth: '68%' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '5px',
-              background: 'rgba(231, 161, 61, 0.15)', border: '1px solid rgba(231, 161, 61, 0.4)',
+              background: 'rgba(197, 160, 89, 0.12)', border: '1px solid rgba(197, 160, 89, 0.3)',
               color: 'var(--color-gold)', borderRadius: 'var(--radius-full)', padding: '2px 8px',
-              fontSize: '0.68rem', fontWeight: 700, marginBottom: '6px'
+              fontSize: '0.68rem', fontWeight: 600, marginBottom: '6px'
             }}>
               <ShieldCheck size={12} />
-              <span>Safety First</span>
+              <span>Responsible Transit Voucher</span>
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', lineHeight: 1.25 }}>
-              Get a Ride with Every Order
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-cream)', lineHeight: 1.25 }}>
+              ₹150 Safe Ride Credit Included
             </h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--color-cream-muted)', marginTop: '4px' }}>
-              Every delivery includes an instant ₹150 ride credit voucher for a safe ride home.
+              Every delivery comes with an automatic ₹150 credit voucher for an Uber or Ola safe ride home.
             </p>
             <button
               className="btn-primary"
               onClick={onNavigateToRides}
               style={{
                 marginTop: '10px', padding: '6px 12px', fontSize: '0.74rem',
-                borderRadius: 'var(--radius-full)'
+                borderRadius: 'var(--radius-sm)'
               }}
             >
-              <span>Explore Rides</span>
+              <span>View Ride Credit</span>
               <ArrowRight size={13} />
             </button>
           </div>
 
-          {/* Luxury car visual with glowing gold road */}
-          <div style={{ position: 'relative', width: '110px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{
-              fontSize: '3rem', filter: 'drop-shadow(0 6px 12px rgba(231, 161, 61, 0.4))'
-            }}>
-              🚗
-            </div>
+          {/* Clean Graphic Badge */}
+          <div style={{
+            width: '74px', height: '74px', borderRadius: '16px',
+            background: '#1D1D28', border: '1px solid var(--color-card-border)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: '4px'
+          }}>
+            <Car size={26} color="var(--color-gold)" />
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-gold)' }}>₹150 OFF</span>
           </div>
         </div>
-
-        {/* Amber road glow at bottom */}
-        <div className="glowing-road-trail" />
       </div>
 
-      {/* Category Icons Row (Beer, Whisky, Vodka, Rum, Wine) */}
+      {/* Category Icons Row */}
       <div>
         <div className="category-row">
           {categories.map((c) => (
@@ -287,19 +287,19 @@ export function CatalogScreen({
         </div>
       </div>
 
-      {/* Signature Liquid Pour Animation Toast */}
+      {/* Added to Cart Toast */}
       {pourProduct && (
         <div className="liquid-pour-toast">
           <div style={{
-            width: '28px', height: '28px', borderRadius: '50%',
+            width: '26px', height: '26px', borderRadius: '50%',
             background: 'var(--color-gold)', color: 'var(--color-midnight)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            🥃
+            <Check size={15} strokeWidth={3} />
           </div>
           <div>
             <strong style={{ fontSize: '0.82rem', color: '#fff' }}>
-              Poured {pourProduct.name}
+              Added {pourProduct.name}
             </strong>
             <p style={{ fontSize: '0.7rem', color: 'var(--color-gold)' }}>
               Added to order · ₹150 Safe Ride Credit active

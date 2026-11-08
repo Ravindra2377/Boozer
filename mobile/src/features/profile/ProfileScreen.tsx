@@ -53,7 +53,9 @@ export const ProfileScreen: React.FC = () => {
       {/* DigiLocker KYC Verified Badge */}
       <View style={styles.kycCard}>
         <View style={styles.kycHeader}>
-          <Text style={styles.kycCheckIcon}>🛡</Text>
+          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(30, 130, 112, 0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#34D399', fontWeight: '800', fontSize: 12 }}>✓</Text>
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.kycTitle}>DigiLocker KYC Verified</Text>
             <Text style={styles.kycDoc}>
@@ -72,7 +74,9 @@ export const ProfileScreen: React.FC = () => {
       {/* Safe Ride Wallet */}
       <View style={styles.walletCard}>
         <View style={styles.walletLeft}>
-          <Text style={styles.walletIcon}>🚘</Text>
+          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#1F1D2B', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder }}>
+            <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 14 }}>₹</Text>
+          </View>
           <View>
             <Text style={styles.walletLabel}>SAFE RIDE WALLET</Text>
             <Text style={styles.walletAmount}>₹{user.activeRideCredit.toFixed(2)}</Text>

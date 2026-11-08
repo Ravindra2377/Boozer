@@ -15,10 +15,10 @@ export const BottomNavPill: React.FC<BottomNavPillProps> = ({
 }) => {
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'home', label: 'Home', icon: '⌂' },
-    { key: 'orders', label: 'Orders', icon: '⬡' },
-    { key: 'ride', label: 'Ride', icon: '🚘' },
-    { key: 'safety', label: 'Safety', icon: '🛡' },
-    { key: 'profile', label: 'Profile', icon: '👤' },
+    { key: 'orders', label: 'Orders', icon: '◈' },
+    { key: 'ride', label: 'Ride', icon: '◎' },
+    { key: 'safety', label: 'Safety', icon: '✦' },
+    { key: 'profile', label: 'Profile', icon: '○' },
   ];
 
   return (
@@ -58,20 +58,20 @@ const styles = StyleSheet.create({
   },
   pillContainer: {
     flexDirection: 'row',
-    backgroundColor: '#0D0B12',
+    backgroundColor: '#17171F',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: colors.cardBorder,
     borderRadius: 30,
     paddingVertical: 10,
     paddingHorizontal: 14,
     width: '100%',
     maxWidth: 380,
     justifyContent: 'space-around',
-    shadowColor: colors.purple,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
   tabItem: {
     alignItems: 'center',
@@ -80,15 +80,12 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   tabIcon: {
-    fontSize: 18,
+    fontSize: 17,
     color: colors.creamMuted,
     marginBottom: 3,
   },
   tabIconActive: {
     color: colors.gold,
-    textShadowColor: 'rgba(231, 161, 61, 0.8)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
   },
   tabLabel: {
     fontSize: 10.5,
@@ -97,6 +94,6 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: colors.gold,
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });

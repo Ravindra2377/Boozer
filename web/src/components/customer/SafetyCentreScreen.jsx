@@ -61,34 +61,34 @@ export function SafetyCentreScreen() {
     <div className="screen-scroll-body">
       {/* Header */}
       <div>
-        <span className="badge-rust">Emergency & Care Protocol</span>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, marginTop: '4px' }}>
-          Safety Centre & SOS
+        <span className="badge-gold">Safety & SOS</span>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '4px' }}>
+          Emergency Assistance
         </h2>
         <p style={{ fontSize: '0.76rem', color: 'var(--color-cream-muted)' }}>
-          One-tap emergency broadcast, live GPS tracking, and responsible drinking guides.
+          One-tap distress signal with live GPS coordinates sent to your trusted contacts.
         </p>
       </div>
 
-      {/* Massive SOS Trigger Button Card */}
+      {/* SOS Trigger Button Card */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(16, 24, 32, 0.95) 100%)',
-        border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-lg)', padding: '24px 16px',
+        background: '#191518',
+        border: '1px solid rgba(214, 69, 69, 0.35)', borderRadius: 'var(--radius-md)', padding: '24px 16px',
         textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-        boxShadow: 'var(--shadow-glow-crimson)'
+        boxShadow: 'var(--shadow-md)'
       }}>
         <div>
           <span style={{
-            fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-            fontWeight: 800, color: 'var(--color-crimson)'
+            fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+            fontWeight: 700, color: 'var(--color-crimson)'
           }}>
-            Emergency SOS Pipeline
+            Emergency SOS Signal
           </span>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-cream)', marginTop: '2px' }}>
             Press & Hold to Trigger SOS
           </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-cream-muted)', maxWidth: '300px', margin: '4px auto 0' }}>
-            Sends instant emergency SMS with live GPS location to your trusted contacts and alerts incident response.
+          <p style={{ fontSize: '0.74rem', color: 'var(--color-cream-muted)', maxWidth: '300px', margin: '4px auto 0' }}>
+            Sends an emergency SMS with your live GPS location to your trusted contacts immediately.
           </p>
         </div>
 
@@ -125,11 +125,11 @@ export function SafetyCentreScreen() {
             style={{
               position: 'absolute', top: '14px', left: '14px',
               width: '112px', height: '112px', borderRadius: '50%',
-              background: sosTriggered ? '#10B981' : 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-              border: '4px solid rgba(255, 255, 255, 0.3)',
+              background: sosTriggered ? '#10B981' : '#D64545',
+              border: '3px solid rgba(255, 255, 255, 0.2)',
               color: '#fff', display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              boxShadow: isHolding ? '0 0 35px rgba(239, 68, 68, 0.9)' : '0 6px 20px rgba(0,0,0,0.5)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
               transform: isHolding ? 'scale(0.96)' : 'scale(1)',
               transition: 'transform 0.15s ease'
             }}

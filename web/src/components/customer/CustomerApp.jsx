@@ -126,28 +126,6 @@ export function CustomerApp({
   return (
     <div className="main-content-viewport">
       <div className={`device-frame-container ${!isFrameMode ? 'device-frame-expanded' : ''}`}>
-        {/* Mobile Notch Bar */}
-        {isFrameMode && (
-          <div className="device-notch">
-            <span>9:41</span>
-            <div className="notch-pill" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button
-                onClick={() => setShowSplash(!showSplash)}
-                style={{
-                  background: 'transparent', border: 'none', color: 'var(--color-gold)',
-                  fontSize: '0.68rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px'
-                }}
-                title="Toggle Splash Screen"
-              >
-                <RefreshCw size={10} />
-                <span>Splash</span>
-              </button>
-              <span>5G 98%</span>
-            </div>
-          </div>
-        )}
-
         {/* Cinematic Splash Screen or Main Content */}
         {showSplash ? (
           <SplashScreen onGetStarted={() => setShowSplash(false)} />

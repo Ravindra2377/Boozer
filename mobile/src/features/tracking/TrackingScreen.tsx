@@ -48,23 +48,23 @@ export const TrackingScreen: React.FC = () => {
         <View style={styles.mapContainer}>
           {/* Blue Store Origin */}
           <View style={styles.originPin}>
-            <Text style={{ fontSize: 13 }}>🏪</Text>
+            <Text style={{ fontSize: 9, color: colors.gold, fontWeight: '800' }}>STORE</Text>
           </View>
 
-          {/* Living Route Glowing Trail */}
+          {/* Route Simulation */}
           <View style={styles.curvedRouteSimulation}>
             <View style={styles.movingCar}>
-              <Text style={{ fontSize: 18 }}>🚘</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
             </View>
           </View>
 
-          {/* Amber Destination Pin */}
+          {/* Destination Pin */}
           <View style={styles.destinationPin}>
-            <Text style={{ fontSize: 14 }}>📍</Text>
+            <Text style={{ fontSize: 9, color: '#34D399', fontWeight: '800' }}>YOU</Text>
           </View>
 
           <View style={styles.etaOverlay}>
-            <Text style={styles.etaText}>● Live GPS Route</Text>
+            <Text style={styles.etaText}>● Live Telemetry Route</Text>
           </View>
         </View>
 
@@ -72,7 +72,7 @@ export const TrackingScreen: React.FC = () => {
         <View style={styles.driverCard}>
           <View style={styles.driverInfoRow}>
             <View style={styles.driverAvatar}>
-              <Text style={{ fontSize: 20 }}>🧔🏽</Text>
+              <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 13 }}>RK</Text>
             </View>
             <View>
               <View style={styles.driverNameRow}>
@@ -88,14 +88,14 @@ export const TrackingScreen: React.FC = () => {
               onPress={() => Alert.alert('Calling Rohit Kumar (+91 98111 22334)...')}
               style={styles.iconButton}
             >
-              <Text style={{ fontSize: 15 }}>📞</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.cream }}>Call</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => Alert.alert('Opening live message chat...')}
               style={styles.iconButton}
             >
-              <Text style={{ fontSize: 15 }}>💬</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.cream }}>Chat</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -107,14 +107,14 @@ export const TrackingScreen: React.FC = () => {
         >
           <View style={styles.shareLeft}>
             <View style={styles.shareIconBox}>
-              <Text style={{ fontSize: 15 }}>🔗</Text>
+              <Text style={{ fontSize: 12, color: colors.gold, fontWeight: '700' }}>↗</Text>
             </View>
             <View>
               <Text style={styles.shareTitle}>Share Live Location</Text>
               <Text style={styles.shareSubtitle}>with a trusted contact</Text>
             </View>
           </View>
-          <Text style={{ color: colors.creamMuted, fontSize: 18 }}>→</Text>
+          <Text style={{ color: colors.creamMuted, fontSize: 16 }}>→</Text>
         </TouchableOpacity>
 
         {/* Doorstep Age Verification Check Card */}

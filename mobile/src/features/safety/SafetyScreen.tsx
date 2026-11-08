@@ -30,20 +30,20 @@ export const SafetyScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.safetyTag}>
-          <Text style={styles.safetyTagText}>SAFETY CENTRE</Text>
+          <Text style={styles.safetyTagText}>SAFETY & CARE</Text>
         </View>
-        <Text style={styles.title}>Emergency SOS & Care</Text>
+        <Text style={styles.title}>Emergency Assistance</Text>
         <Text style={styles.subtitle}>
-          One-tap emergency broadcast, live location sharing, and responsible drinking guidelines.
+          One-tap distress broadcast, live location sharing, and responsible drinking guidelines.
         </Text>
       </View>
 
       {/* SOS Hero Trigger Box */}
       <View style={styles.sosCard}>
-        <Text style={styles.sosCardTag}>EMERGENCY PROTOCOL</Text>
+        <Text style={styles.sosCardTag}>EMERGENCY DISTRESS</Text>
         <Text style={styles.sosCardTitle}>Hold for Emergency SOS</Text>
         <Text style={styles.sosCardDesc}>
-          Sends an urgent distress alert with your live Google Maps coordinates to your trusted contacts.
+          Sends an urgent distress alert with your live GPS coordinates to your trusted contacts.
         </Text>
 
         <TouchableOpacity
@@ -51,7 +51,7 @@ export const SafetyScreen: React.FC = () => {
           onPress={handleTriggerSos}
           style={[styles.bigSosButton, sosActive && styles.bigSosButtonActive]}
         >
-          <Text style={styles.sosButtonIcon}>{sosActive ? '✓' : '🚨'}</Text>
+          <Text style={styles.sosButtonIcon}>{sosActive ? '✓' : '!'}</Text>
           <Text style={styles.sosButtonText}>{sosActive ? 'ALERT SENT' : 'SOS'}</Text>
           <Text style={styles.sosButtonSub}>{sosActive ? 'Help alerted' : 'Tap for Emergency'}</Text>
         </TouchableOpacity>
@@ -90,7 +90,7 @@ export const SafetyScreen: React.FC = () => {
 
       {/* Responsible Drinking Guidelines */}
       <View style={styles.guidelinesCard}>
-        <Text style={styles.guidelinesTitle}>💡 Responsible Drinking Tips</Text>
+        <Text style={styles.guidelinesTitle}>Responsible Consumption Guidelines</Text>
         <Text style={styles.bulletItem}>• Always use your included ₹150 ride voucher to book a safe ride home.</Text>
         <Text style={styles.bulletItem}>• Never drive under the influence of alcohol (BAC legal limit in India: 0.03%).</Text>
         <Text style={styles.bulletItem}>• Alternate alcoholic beverages with water to stay hydrated.</Text>
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   safetyTag: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: 'rgba(214, 69, 69, 0.12)',
     borderRadius: 8,
     paddingVertical: 2,
     paddingHorizontal: 8,
@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sosCard: {
-    backgroundColor: 'rgba(127, 29, 29, 0.2)',
+    backgroundColor: '#191518',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.45)',
-    borderRadius: 22,
-    padding: 22,
+    borderColor: 'rgba(214, 69, 69, 0.35)',
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
     marginBottom: 20,
   },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   sosCardTitle: {
     color: colors.cream,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     marginBottom: 6,
   },
@@ -167,19 +167,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   bigSosButton: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: colors.crimsonDark,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.crimson,
     borderWidth: 3,
-    borderColor: colors.crimson,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.crimson,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.8,
-    shadowRadius: 18,
-    elevation: 10,
   },
   bigSosButtonActive: {
     backgroundColor: colors.success,

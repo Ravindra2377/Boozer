@@ -18,34 +18,15 @@ export function SplashScreen({ onGetStarted }) {
   return (
     <div style={{
       position: 'relative', width: '100%', height: '100%', minHeight: '820px',
-      background: 'radial-gradient(circle at 50% 30%, #1D1432 0%, #0F0B18 50%, #08060C 100%)',
+      background: '#0C0C0F',
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
       padding: '48px 24px 36px', overflow: 'hidden', color: 'var(--color-cream)'
     }}>
-      {/* City lights background simulation */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%',
-        background: 'linear-gradient(to top, rgba(112, 43, 192, 0.15) 0%, transparent 100%)',
-        opacity: animStage >= 3 ? 1 : 0.2, transition: 'opacity 1.5s ease'
-      }} />
-
-      {/* Bokeh / Glow Lights */}
-      <div style={{
-        position: 'absolute', top: '20%', left: '15%', width: '180px', height: '180px',
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(231, 161, 61, 0.22) 0%, transparent 70%)',
-        filter: 'blur(30px)', opacity: animStage >= 2 ? 1 : 0, transition: 'opacity 1.2s ease'
-      }} />
-
-      <div style={{
-        position: 'absolute', top: '35%', right: '10%', width: '160px', height: '160px',
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(112, 43, 192, 0.25) 0%, transparent 70%)',
-        filter: 'blur(30px)', opacity: animStage >= 2 ? 1 : 0, transition: 'opacity 1.2s ease'
-      }} />
-
-      {/* Top Timestamp matching reference: 9:41 Mon, Oct 27 */}
+      {/* Brand Header */}
       <div style={{ textAlign: 'center', zIndex: 10 }}>
-        <h2 style={{ fontSize: '2.8rem', fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1 }}>9:41</h2>
-        <p style={{ fontSize: '0.82rem', color: 'var(--color-cream-muted)', marginTop: '4px' }}>Mon, Oct 27</p>
+        <span style={{ fontSize: '0.74rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: 700 }}>
+          Telangana Licensed Express
+        </span>
       </div>
 
       {/* Centre: B[glass]ZER Logo with Falling Drop & Liquid Fill */}
@@ -55,13 +36,12 @@ export function SplashScreen({ onGetStarted }) {
       }}>
         {/* Animated Droplet */}
         <div style={{
-          width: '8px', height: '14px', borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-          background: 'linear-gradient(to bottom, #FFE8B2, #E7A13D)',
-          boxShadow: '0 0 10px rgba(231, 161, 61, 0.8)',
+          width: '6px', height: '12px', borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+          background: 'var(--color-gold)',
           marginBottom: '12px',
           opacity: animStage === 1 ? 1 : 0,
-          transform: animStage === 1 ? 'translateY(16px)' : 'translateY(-10px)',
-          transition: 'all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53)'
+          transform: animStage === 1 ? 'translateY(12px)' : 'translateY(-10px)',
+          transition: 'all 0.5s ease'
         }} />
 
         {/* Logo Text with Glass Icon in the middle */}

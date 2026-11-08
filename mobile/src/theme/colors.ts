@@ -1,32 +1,32 @@
 export const colors = {
-  // Midnight Gold × Neon Luxury Palette
-  midnight: '#09090E',
-  plumDeep: '#0D0B14',
-  plumSurface: '#14101F',
-  cardGlass: 'rgba(22, 17, 32, 0.75)',
-  cardBorder: 'rgba(231, 161, 61, 0.14)',
-  cardBorderActive: 'rgba(231, 161, 61, 0.5)',
+  // Refined Dark Luxury Palette
+  midnight: '#0C0C0F',
+  plumDeep: '#121217',
+  plumSurface: '#17171E',
+  cardGlass: '#17171E',
+  cardBorder: 'rgba(255, 255, 255, 0.08)',
+  cardBorderActive: 'rgba(197, 160, 89, 0.45)',
 
-  // Gold Accents
-  gold: '#E7A13D',
-  goldHover: '#F5B24E',
-  goldDark: '#C47F1D',
-  goldGlow: 'rgba(231, 161, 61, 0.35)',
+  // Warm Brass & Champagne Gold
+  gold: '#C5A059',
+  goldHover: '#D4AF37',
+  goldDark: '#9E7B35',
+  goldGlow: 'rgba(197, 160, 89, 0.15)',
 
-  // Purple Accents
-  purple: '#702BC0',
-  purpleLight: '#9442FE',
-  purpleGlow: 'rgba(112, 43, 192, 0.4)',
+  // Slate Neutrals
+  purple: '#23202E',
+  purpleLight: '#A5A2B8',
+  purpleGlow: 'transparent',
 
-  // Neutrals
-  cream: '#F3EEE8',
-  creamMuted: '#9D96A8',
-  creamSubtle: '#6A6376',
+  // Typography Neutrals
+  cream: '#EDEDF2',
+  creamMuted: '#8E8E9F',
+  creamSubtle: '#5A5A6B',
 
   // Semantic
-  tealNoir: '#248D78',
-  crimson: '#EF4444',
-  crimsonDark: '#7F1D1D',
-  crimsonGlow: 'rgba(239, 68, 68, 0.45)',
+  tealNoir: '#1E8270',
+  crimson: '#D64545',
+  crimsonDark: '#3B1717',
+  crimsonGlow: 'rgba(214, 69, 69, 0.2)',
   success: '#10B981',
 };

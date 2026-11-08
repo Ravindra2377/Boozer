@@ -107,7 +107,7 @@ export const PersistentSosButton: React.FC<PersistentSosButtonProps> = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.badgeRow}>
-              <Text style={styles.emergencyTag}>EMERGENCY PROTOCOL</Text>
+              <Text style={styles.emergencyTag}>EMERGENCY DISTRESS</Text>
             </View>
 
             <Text style={styles.modalTitle}>Emergency Assistance</Text>
@@ -220,17 +220,17 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#120E1C',
-    borderRadius: 24,
+    backgroundColor: '#16161D',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: 'rgba(214, 69, 69, 0.35)',
     padding: 24,
     alignItems: 'center',
-    shadowColor: colors.crimson,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 30,
-    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
   },
   badgeRow: {
     marginBottom: 8,

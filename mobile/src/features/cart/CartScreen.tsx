@@ -48,7 +48,9 @@ export const CartScreen: React.FC<CartScreenProps> = ({
       <ScrollView contentContainerStyle={styles.content}>
         {items.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>🛒</Text>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1A1A22', alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderWidth: 1, borderColor: colors.cardBorder }}>
+              <Text style={{ fontSize: 18, color: colors.creamMuted }}>0</Text>
+            </View>
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptySub}>Add legal beverages from the catalog to proceed.</Text>
           </View>
@@ -56,7 +58,6 @@ export const CartScreen: React.FC<CartScreenProps> = ({
           <>
             {/* Delivery Location Check */}
             <View style={styles.addressBox}>
-              <Text style={{ fontSize: 16 }}>📍</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.addressTitle}>Delivery Destination</Text>
                 <Text style={styles.addressDesc}>Villa 14, Silicon Meadows, Jubilee Hills</Text>
@@ -94,11 +95,10 @@ export const CartScreen: React.FC<CartScreenProps> = ({
 
             {/* Safe Ride Credit Promotion */}
             <View style={styles.safeRidePromo}>
-              <Text style={{ fontSize: 20 }}>🚘</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.safeRideTitle}>Safe Ride Home Credit Included!</Text>
+                <Text style={styles.safeRideTitle}>Safe Ride Credit Included (₹150)</Text>
                 <Text style={styles.safeRideDesc}>
-                  This order activates a ₹150 Uber/Ola discount voucher valid for 24h.
+                  Order activates a ₹150 Uber/Ola discount voucher valid for 24h.
                 </Text>
               </View>
             </View>

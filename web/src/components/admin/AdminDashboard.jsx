@@ -88,8 +88,8 @@ export function AdminDashboard() {
             </div>
             <div>
               <div className="badge-row" style={{ marginBottom: '4px' }}>
-                <span className="badge-teal">Pilot Ops Command Center</span>
-                <span className="badge-amber">Delhi City Pilot</span>
+                <span className="badge-teal">Compliance Active</span>
+                <span className="badge-gold">Telangana & Delhi Zones</span>
               </div>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-cream)' }}>
                 Boozer Platform Compliance & Admin
