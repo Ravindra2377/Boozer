@@ -1,29 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Phone, MessageSquare, ShieldCheck, Share2, HelpCircle,
   ArrowRight, Key, UserCheck, Navigation, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { ORDER_STATE_MACHINE_STEPS } from '../../data/mockData';
+import { LiveDeliveryMap } from '../map/LiveDeliveryMap';
 
 export function OrderTrackingScreen({
   order,
   onNavigateToRides,
-  onAdvanceOrderState
+  onAdvanceOrderState,
+  city = "Hyderabad"
 }) {
-  const [carProgress, setCarProgress] = useState(60); // 0 to 100 along path
   const [doorstepOtp, setDoorstepOtp] = useState('');
   const [doorstepError, setDoorstepError] = useState('');
   const [showHelpModal, setShowHelpModal] = useState(false);
-
-  // Moving car along glowing trail
-  useEffect(() => {
-    if (order.status === 'DISPATCHED') {
-      const interval = setInterval(() => {
-        setCarProgress((prev) => (prev >= 92 ? 55 : prev + 2.5));
-      }, 900);
-      return () => clearInterval(interval);
-    }
-  }, [order.status]);
 
   const currentStepIndex = ORDER_STATE_MACHINE_STEPS.findIndex((s) => s.key === order.status);
   const currentStep = ORDER_STATE_MACHINE_STEPS[currentStepIndex] || ORDER_STATE_MACHINE_STEPS[0];
@@ -63,111 +54,14 @@ export function OrderTrackingScreen({
         </div>
       </div>
 
-      {/* Living Route Map (Matching Phone Mockup 3 in Reference Image) */}
-      <div style={{
-        width: '100%', height: '280px', borderRadius: 'var(--radius-lg)',
-        background: 'radial-gradient(circle at 60% 40%, #171126 0%, #0B0813 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)', position: 'relative', overflow: 'hidden',
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.7)'
-      }}>
-        {/* Abstract Dark City Grid */}
-        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.2 }}>
-          <line x1="0" y1="40" x2="100%" y2="40" stroke="#372C4C" strokeWidth="2" />
-          <line x1="0" y1="120" x2="100%" y2="120" stroke="#372C4C" strokeWidth="3" />
-          <line x1="0" y1="200" x2="100%" y2="200" stroke="#372C4C" strokeWidth="2" />
-          <line x1="60" y1="0" x2="60" y2="100%" stroke="#372C4C" strokeWidth="2" />
-          <line x1="160" y1="0" x2="160" y2="100%" stroke="#372C4C" strokeWidth="4" />
-          <line x1="280" y1="0" x2="280" y2="100%" stroke="#372C4C" strokeWidth="2" />
-        </svg>
-
-        {/* The Living Glowing Amber Route Line */}
-        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-          <defs>
-            <linearGradient id="routeGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#4361EE" />
-              <stop offset="30%" stopColor="#E7A13D" />
-              <stop offset="100%" stopColor="#F5B24E" />
-            </linearGradient>
-            <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {/* Glowing underlay */}
-          <path
-            d="M 60 70 Q 120 160 220 130 T 320 220"
-            fill="none"
-            stroke="rgba(231, 161, 61, 0.4)"
-            strokeWidth="10"
-            strokeLinecap="round"
-          />
-
-          {/* Crisp animated route */}
-          <path
-            d="M 60 70 Q 120 160 220 130 T 320 220"
-            fill="none"
-            stroke="url(#routeGlowGrad)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            filter="url(#glowEffect)"
-            strokeDasharray="6 4"
-            className="living-route-svg"
-          />
-        </svg>
-
-        {/* Origin Pin (Blue circle matching reference) */}
-        <div style={{
-          position: 'absolute', top: '56px', left: '46px',
-          width: '28px', height: '28px', borderRadius: '50%',
-          background: '#2563EB', color: '#fff', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800,
-          boxShadow: '0 0 16px rgba(37, 99, 235, 0.8)', border: '2px solid #fff'
-        }}>
-          🏪
-        </div>
-
-        {/* Destination Pin (Amber pin matching reference) */}
-        <div style={{
-          position: 'absolute', bottom: '46px', right: '46px',
-          width: '32px', height: '32px', borderRadius: '50%',
-          background: 'var(--color-gold)', color: 'var(--color-midnight)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 900,
-          boxShadow: 'var(--glow-gold)', border: '2px solid #fff'
-        }}>
-          📍
-        </div>
-
-        {/* Moving Delivery Car along the route */}
-        <div style={{
-          position: 'absolute',
-          top: `${70 + (carProgress / 100) * 130}px`,
-          left: `${60 + (carProgress / 100) * 240}px`,
-          transform: 'translate(-50%, -50%)',
-          transition: 'all 0.8s ease',
-          zIndex: 10
-        }}>
-          <div style={{
-            width: '38px', height: '24px', borderRadius: '6px',
-            background: 'linear-gradient(135deg, #F5B24E 0%, #D97706 100%)',
-            border: '2px solid #fff', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '0.72rem',
-            boxShadow: '0 0 20px rgba(231, 161, 61, 0.9)'
-          }}>
-            🚗
-          </div>
-        </div>
-
-        {/* Delivery ETA Pill */}
-        <div style={{
-          position: 'absolute', top: '12px', right: '14px',
-          background: 'rgba(13, 11, 20, 0.85)', backdropFilter: 'blur(8px)',
-          border: '1px solid var(--color-card-border)', borderRadius: 'var(--radius-full)',
-          padding: '4px 12px', fontSize: '0.72rem', color: 'var(--color-gold)', fontWeight: 700
-        }}>
-          ● Live GPS Feed
-        </div>
-      </div>
+      {/* Live Interactive Delivery Route Map (Leaflet × CartoDB Dark Matter) */}
+      <LiveDeliveryMap
+        order={order}
+        city={city}
+        height="300px"
+        riderName="Rohit Kumar"
+        riderVehicle="KA 01 AB 1234"
+      />
 
       {/* Delivery Partner Card (Matching Image 1: "Rohit Kumar ★ 4.9 · KA 01 AB 1234") */}
       <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

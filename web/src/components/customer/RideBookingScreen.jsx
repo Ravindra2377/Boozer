@@ -4,12 +4,21 @@ import {
   ExternalLink, Sparkles, Navigation, Copy
 } from 'lucide-react';
 import { MOCK_RIDE_PARTNERS } from '../../data/mockData';
+import { SafeRideMap } from '../map/SafeRideMap';
 
 export function RideBookingScreen({ user, onOpenSos }) {
   const [selectedPartner, setSelectedPartner] = useState(MOCK_RIDE_PARTNERS[0]);
   const [isBooked, setIsBooked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  const isDelhi = user?.city?.toLowerCase()?.includes('delhi');
+  const pickupAddress = isDelhi
+    ? "Flat 402, Barakhamba Towers, Connaught Place"
+    : "Jubilee Hills Club / Social Bar, Road No. 36";
+  const dropoffAddress = isDelhi
+    ? "House 24, Sector 44, Noida (Home)"
+    : (user?.deliveryAddress || "Villa 14, Silicon Meadows, Jubilee Hills (Home)");
 
   const handleBook = () => {
     setIsBooked(true);
@@ -18,6 +27,15 @@ export function RideBookingScreen({ user, onOpenSos }) {
   const handleCopyLink = () => {
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleSelectPartnerFromMap = (cab) => {
+    const matched = MOCK_RIDE_PARTNERS.find(
+      (p) => p.partner === cab.partner || p.id === cab.id
+    );
+    if (matched) {
+      setSelectedPartner(matched);
+    }
   };
 
   return (
@@ -49,14 +67,14 @@ export function RideBookingScreen({ user, onOpenSos }) {
         </div>
       </div>
 
-      {/* Origin & Destination */}
+      {/* Origin & Destination Card */}
       <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-amber)' }} />
           <div>
             <span style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>Pickup Location</span>
             <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-cream)' }}>
-              Flat 402, Barakhamba Towers, Connaught Place
+              {pickupAddress}
             </p>
           </div>
         </div>
@@ -68,11 +86,20 @@ export function RideBookingScreen({ user, onOpenSos }) {
           <div>
             <span style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>Drop-off Location</span>
             <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-cream)' }}>
-              House 24, Sector 44, Noida (Home)
+              {dropoffAddress}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Interactive Safe Ride Dispatch Radar Map */}
+      <SafeRideMap
+        city={user?.city || "Hyderabad"}
+        selectedPartner={selectedPartner}
+        onSelectPartner={handleSelectPartnerFromMap}
+        isBooked={isBooked}
+        height="260px"
+      />
 
       {/* Partner Comparison Section */}
       <div>

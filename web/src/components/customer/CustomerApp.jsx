@@ -168,6 +168,7 @@ export function CustomerApp({
             {activeTab === 'orders' && (
               <OrderTrackingScreen
                 order={order}
+                city={user?.city || "Hyderabad"}
                 onNavigateToRides={() => setActiveTab('ride')}
                 onAdvanceOrderState={handleAdvanceOrderState}
               />

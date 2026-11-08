@@ -822,3 +822,349 @@ h1, h2, h3, h4, .font-heading {
 .portal-table tr:hover td {
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* ============================================================================
+   BOOZER · INTERACTIVE LEAFLET MAP & TELEMETRY STYLES
+   ============================================================================ */
+
+.boozer-map-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-midnight);
+  border: 1px solid rgba(231, 161, 61, 0.25);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(231, 161, 61, 0.08);
+}
+
+.boozer-map-element {
+  width: 100%;
+  height: 100%;
+  background: #09090E !important;
+}
+
+/* Leaflet Container Overrides */
+.leaflet-container {
+  background: #09090E !important;
+  font-family: var(--font-body) !important;
+}
+
+/* Custom Glassmorphic Popups */
+.leaflet-popup-content-wrapper {
+  background: rgba(14, 11, 24, 0.95) !important;
+  color: var(--color-cream) !important;
+  border: 1px solid rgba(231, 161, 61, 0.35) !important;
+  border-radius: var(--radius-md) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.85), 0 0 15px rgba(231, 161, 61, 0.25) !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(14, 11, 24, 0.95) !important;
+  border: 1px solid rgba(231, 161, 61, 0.35) !important;
+  box-shadow: none !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--color-gold) !important;
+  font-size: 16px !important;
+  padding: 6px !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.45 !important;
+  font-size: 0.82rem !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(9, 9, 14, 0.8) !important;
+  color: rgba(243, 238, 232, 0.4) !important;
+  font-size: 9px !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-gold) !important;
+  text-decoration: none !important;
+}
+
+/* Custom Marker Styling */
+.boozer-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Store Marker */
+.marker-store {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2D1F47 0%, #151024 100%);
+  border: 2px solid var(--color-gold);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 0 20px rgba(231, 161, 61, 0.7);
+  transition: transform var(--transition-fast);
+}
+
+.marker-store:hover {
+  transform: scale(1.1);
+}
+
+/* Customer / Destination Marker */
+.marker-customer {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d3b36 0%, #061c1a 100%);
+  border: 2px solid var(--color-teal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  box-shadow: 0 0 20px rgba(42, 157, 143, 0.8);
+  position: relative;
+}
+
+.marker-customer::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(42, 157, 143, 0.6);
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Delivery Rider Marker */
+.marker-rider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8));
+}
+
+.marker-rider-badge {
+  background: linear-gradient(135deg, #E7A13D 0%, #B87314 100%);
+  border: 2px solid #fff;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  color: #09090E;
+  font-weight: 800;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 0 24px rgba(231, 161, 61, 0.9);
+  white-space: nowrap;
+}
+
+.marker-rider-beacon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  border: 2px solid #fff;
+  margin-top: 2px;
+  position: relative;
+}
+
+.marker-rider-beacon::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: rgba(231, 161, 61, 0.4);
+  animation: radar-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Safe Ride Cab Markers */
+.marker-cab-badge {
+  background: rgba(14, 11, 24, 0.95);
+  border: 1.5px solid var(--color-card-border);
+  border-radius: 12px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.marker-cab-badge.active {
+  border-color: var(--color-teal);
+  background: rgba(42, 157, 143, 0.22);
+  box-shadow: 0 0 20px rgba(42, 157, 143, 0.7);
+  transform: scale(1.08);
+}
+
+.marker-cab-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Animations */
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes route-crawl {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.leaflet-glowing-route {
+  stroke-dasharray: 8 6;
+  animation: route-crawl 1.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(231, 161, 61, 0.85));
+}
+
+.leaflet-glowing-route-teal {
+  stroke-dasharray: 8 6;
+  animation: route-crawl 1.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(42, 157, 143, 0.85));
+}
+
+/* Floating Glass Map Controls */
+.map-floating-overlay-top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 400;
+  pointer-events: none;
+}
+
+.map-floating-overlay-top > * {
+  pointer-events: auto;
+}
+
+.map-control-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-glass-btn {
+  background: rgba(14, 11, 24, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(231, 161, 61, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--color-cream);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.map-glass-btn:hover {
+  background: rgba(231, 161, 61, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.map-glass-btn.active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-midnight);
+  box-shadow: var(--glow-gold);
+}
+
+.map-glass-btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.map-telemetry-badge {
+  background: rgba(14, 11, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(231, 161, 61, 0.25);
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  color: var(--color-gold);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.blinking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+  animation: blink-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Map Bottom Telemetry Bar */
+.map-bottom-telemetry-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(14, 11, 24, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(231, 161, 61, 0.22);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 400;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+
+.map-telemetry-metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.map-telemetry-label {
+  font-size: 0.65rem;
+  color: var(--color-cream-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.map-telemetry-value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-cream);
+}
+
