@@ -11,11 +11,12 @@ export function RideBookingScreen({ user, onOpenSos, isFrameMode = true }) {
   const [isBooked, setIsBooked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [livePickupAddress, setLivePickupAddress] = useState(null);
 
   const isDelhi = user?.city?.toLowerCase()?.includes('delhi');
-  const pickupAddress = isDelhi
+  const pickupAddress = livePickupAddress || (isDelhi
     ? "Flat 402, Barakhamba Towers, Connaught Place"
-    : "Jubilee Hills Club / Social Bar, Road No. 36";
+    : "Jubilee Hills Club / Social Bar, Road No. 36");
   const dropoffAddress = isDelhi
     ? "House 24, Sector 44, Noida (Home)"
     : (user?.deliveryAddress || "Villa 14, Silicon Meadows, Jubilee Hills (Home)");
@@ -97,6 +98,7 @@ export function RideBookingScreen({ user, onOpenSos, isFrameMode = true }) {
         city={user?.city || "Hyderabad"}
         selectedPartner={selectedPartner}
         onSelectPartner={handleSelectPartnerFromMap}
+        onPickupChange={(livePickup) => setLivePickupAddress(livePickup.address || livePickup.label)}
         isBooked={isBooked}
         isFrameMode={isFrameMode}
         height="260px"

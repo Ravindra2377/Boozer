@@ -16,6 +16,12 @@ export function OrderTrackingScreen({
   const [doorstepOtp, setDoorstepOtp] = useState('');
   const [doorstepError, setDoorstepError] = useState('');
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [liveTelemetry, setLiveTelemetry] = useState({
+    etaMinutes: 12,
+    remainingKm: 2.8,
+    isLiveGps: false,
+    address: null
+  });
 
   const currentStepIndex = ORDER_STATE_MACHINE_STEPS.findIndex((s) => s.key === order.status);
   const currentStep = ORDER_STATE_MACHINE_STEPS[currentStepIndex] || ORDER_STATE_MACHINE_STEPS[0];
@@ -50,7 +56,9 @@ export function OrderTrackingScreen({
             {order.status === 'DELIVERED' ? "Order Delivered Successfully!" : "Your order is on the way!"}
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--color-cream-muted)', marginTop: '2px' }}>
-            {order.status === 'DELIVERED' ? "Enjoy responsibly. Safe ride credit active." : "Arriving in 12 min · Rohit Kumar"}
+            {order.status === 'DELIVERED'
+              ? "Enjoy responsibly. Safe ride credit active."
+              : `Arriving in ${liveTelemetry.etaMinutes} min · Rohit Kumar${liveTelemetry.isLiveGps && liveTelemetry.address ? ` · ${liveTelemetry.address}` : ''}`}
           </p>
         </div>
       </div>
@@ -62,6 +70,7 @@ export function OrderTrackingScreen({
         height="300px"
         riderName="Rohit Kumar"
         riderVehicle="KA 01 AB 1234"
+        onTelemetryUpdate={(data) => setLiveTelemetry((prev) => ({ ...prev, ...data }))}
         isFrameMode={isFrameMode}
       />
 

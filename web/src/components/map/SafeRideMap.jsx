@@ -1,19 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import {
-  Crosshair, Maximize2, Minimize2, Plus, Minus, MapPin
+  Crosshair, Maximize2, Minimize2, Plus, Minus, MapPin, Compass
 } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
 import { addDarkTileLayer } from './mapTiles';
+import {
+  getLiveDeviceCoordinates,
+  reverseGeocode,
+  fetchRealRoadRoute
+} from '../../api/liveLocationService';
 
 /**
- * Interactive Safe Ride Home Map built with Leaflet and CartoDB Dark Matter.
- * Displays pickup, dropoff, route, and live nearby partner fleets (Uber / Ola / Rapido).
+ * Interactive Safe Ride Home Map built with Leaflet and CartoDB/Esri Dark Canvas.
+ * Supports:
+ * 1. Real Road Routing via OSRM turn-by-turn geometry
+ * 2. Real Device GPS Location detection for instant safe ride pickup
+ * 3. Live nearby partner fleets (Uber / Ola / Rapido)
  */
 export function SafeRideMap({
   city = "Hyderabad",
   selectedPartner,
   onSelectPartner,
+  onPickupChange,
   isBooked = false,
   height = "260px",
   isFrameMode = true
@@ -22,16 +31,48 @@ export function SafeRideMap({
   const mapInstanceRef = useRef(null);
   const cabMarkersMapRef = useRef(new Map());
   const approachLineRef = useRef(null);
+  const pickupMarkerRef = useRef(null);
+  const routeLineRef = useRef(null);
+  const glowLineRef = useRef(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [approachProgress, setApproachProgress] = useState(0); // 0 to 1
   const [driverEta, setDriverEta] = useState(selectedPartner?.etaMinutes || 4);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isLiveGpsActive, setIsLiveGpsActive] = useState(false);
+  const [roadTripKm, setRoadTripKm] = useState(3.6);
 
   const mapData = getMapDataForCity(city);
   const { safeRide } = mapData;
   const { pickup, dropoff, routeWaypoints, nearbyCabs } = safeRide;
 
-  // Initialize Map
+  const [activePickup, setActivePickup] = useState(pickup);
+  const [activeRouteWaypoints, setActiveRouteWaypoints] = useState(routeWaypoints);
+
+  // 1. Calculate Real Road Driving Geometry via OSRM on Mount
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchRealRoadRoute(activePickup.coords, dropoff.coords).then((route) => {
+      if (!isCancelled && route && route.waypoints && route.waypoints.length > 1) {
+        setActiveRouteWaypoints(route.waypoints);
+        setRoadTripKm(route.distanceKm);
+
+        if (mapInstanceRef.current) {
+          if (glowLineRef.current) glowLineRef.current.setLatLngs(route.waypoints);
+          if (routeLineRef.current) routeLineRef.current.setLatLngs(route.waypoints);
+          const bounds = L.latLngBounds(route.waypoints);
+          mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        }
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activePickup.coords, dropoff.coords]);
+
+  // 2. Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -40,7 +81,7 @@ export function SafeRideMap({
       mapInstanceRef.current = null;
     }
 
-    const bounds = L.latLngBounds(routeWaypoints);
+    const bounds = L.latLngBounds(activeRouteWaypoints);
     const center = bounds.getCenter();
 
     const map = L.map(mapContainerRef.current, {
@@ -55,23 +96,25 @@ export function SafeRideMap({
     addDarkTileLayer(map);
 
     // Safe Ride Route Polyline Glow Underlay
-    L.polyline(routeWaypoints, {
+    const glowLine = L.polyline(activeRouteWaypoints, {
       color: 'rgba(42, 157, 143, 0.25)',
       weight: 10,
       lineCap: 'round',
       lineJoin: 'round'
     }).addTo(map);
+    glowLineRef.current = glowLine;
 
     // Active Glowing Route
-    L.polyline(routeWaypoints, {
+    const routeLine = L.polyline(activeRouteWaypoints, {
       color: '#2DD4BF',
       weight: 4,
       className: 'leaflet-glowing-route-teal',
       lineCap: 'round',
       lineJoin: 'round'
     }).addTo(map);
+    routeLineRef.current = routeLine;
 
-    // 1. Pickup Marker (Golden Amber)
+    // Pickup Marker (Golden Amber)
     const pickupIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
@@ -87,16 +130,17 @@ export function SafeRideMap({
       iconSize: [34, 34],
       iconAnchor: [17, 17]
     });
-    const pickupMarker = L.marker(pickup.coords, { icon: pickupIcon }).addTo(map);
+    const pickupMarker = L.marker(activePickup.coords, { icon: pickupIcon }).addTo(map);
     pickupMarker.bindPopup(`
       <div style="font-family: var(--font-body)">
         <strong style="color: var(--color-gold); font-size: 0.88rem;">Pickup Location</strong>
-        <p style="font-size: 0.74rem; color: var(--color-cream); margin-top: 2px;">${pickup.label}</p>
-        <p style="font-size: 0.72rem; color: var(--color-cream-muted); margin-top: 2px;">${pickup.address}</p>
+        <p style="font-size: 0.74rem; color: var(--color-cream); margin-top: 2px;">${activePickup.label}</p>
+        <p style="font-size: 0.72rem; color: var(--color-cream-muted); margin-top: 2px;">${activePickup.address}</p>
       </div>
     `);
+    pickupMarkerRef.current = pickupMarker;
 
-    // 2. Drop-off Marker (Emerald / Teal)
+    // Drop-off Marker (Emerald / Teal)
     const dropoffIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
@@ -116,7 +160,7 @@ export function SafeRideMap({
       </div>
     `);
 
-    // 3. Nearby Partner Cabs
+    // Nearby Partner Cabs
     const markersMap = new Map();
     nearbyCabs.forEach((cab) => {
       const isSelected = selectedPartner?.partner === cab.partner || selectedPartner?.id === cab.id;
@@ -180,20 +224,70 @@ export function SafeRideMap({
         mapInstanceRef.current = null;
       }
     };
-  }, [city, pickup, dropoff, routeWaypoints, nearbyCabs]);
+  }, [city, activePickup, dropoff, nearbyCabs]);
 
-  // Immediate re-invalidation when frame mode expands/contracts
+  // 3. Immediate re-invalidation when frame mode expands/contracts
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const t = setTimeout(() => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.invalidateSize();
-        const bounds = L.latLngBounds(routeWaypoints);
+        const bounds = L.latLngBounds(activeRouteWaypoints);
         mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
       }
     }, 180);
     return () => clearTimeout(t);
-  }, [isFrameMode, routeWaypoints]);
+  }, [isFrameMode, activeRouteWaypoints]);
+
+  // 4. Live Device GPS Pickup Point Handler
+  const handleDetectLivePickup = async () => {
+    try {
+      setIsLocating(true);
+      const liveCoords = await getLiveDeviceCoordinates();
+      const geocode = await reverseGeocode(liveCoords.lat, liveCoords.lng);
+
+      const livePickup = {
+        label: "Your Real Location (Pickup)",
+        address: geocode.shortAddress || geocode.displayName,
+        coords: [liveCoords.lat, liveCoords.lng]
+      };
+
+      setActivePickup(livePickup);
+      setIsLiveGpsActive(true);
+      if (onPickupChange) {
+        onPickupChange(livePickup);
+      }
+
+      if (pickupMarkerRef.current && mapInstanceRef.current) {
+        pickupMarkerRef.current.setLatLng(livePickup.coords);
+        pickupMarkerRef.current.bindPopup(`
+          <div style="font-family: var(--font-body)">
+            <strong style="color: #10B981; font-size: 0.88rem;">📍 Live Device GPS Pickup</strong>
+            <p style="font-size: 0.74rem; color: var(--color-cream); margin-top: 2px;">${livePickup.label}</p>
+            <p style="font-size: 0.72rem; color: var(--color-cream-muted); margin-top: 2px;">${livePickup.address}</p>
+          </div>
+        `).openPopup();
+      }
+
+      // Fetch real road route from live pickup to home
+      const roadRoute = await fetchRealRoadRoute(livePickup.coords, dropoff.coords);
+      if (roadRoute && roadRoute.waypoints) {
+        setActiveRouteWaypoints(roadRoute.waypoints);
+        setRoadTripKm(roadRoute.distanceKm);
+
+        if (mapInstanceRef.current) {
+          if (glowLineRef.current) glowLineRef.current.setLatLngs(roadRoute.waypoints);
+          if (routeLineRef.current) routeLineRef.current.setLatLngs(roadRoute.waypoints);
+          const bounds = L.latLngBounds(roadRoute.waypoints);
+          mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Could not fetch device location.');
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   // Helper to construct custom HTML Cab Icon
   const createCabIcon = (cab, isSelected) => {
@@ -279,14 +373,14 @@ export function SafeRideMap({
   // Recenter Route
   const handleFitRoute = () => {
     if (!mapInstanceRef.current) return;
-    const bounds = L.latLngBounds(routeWaypoints);
+    const bounds = L.latLngBounds(activeRouteWaypoints);
     mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], animate: true });
   };
 
   // Focus Pickup
   const handleFocusPickup = () => {
     if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.setView(pickup.coords, 16, { animate: true });
+    mapInstanceRef.current.setView(activePickup.coords, 16, { animate: true });
   };
 
   const handleZoomIn = () => {
@@ -319,10 +413,24 @@ export function SafeRideMap({
       <div className="map-floating-overlay-top">
         <div className="map-telemetry-badge">
           <span className="blinking-dot" style={{ background: '#2DD4BF', boxShadow: '0 0 8px #2DD4BF' }} />
-          <span>SAFE RIDE DISPATCH RADAR</span>
+          <span>{isLiveGpsActive ? '● LIVE DEVICE PICKUP GPS' : 'SAFE RIDE DISPATCH RADAR'}</span>
         </div>
 
         <div className="map-control-btn-group">
+          {/* My Live Location */}
+          <button
+            type="button"
+            className={`map-glass-btn ${isLiveGpsActive ? 'active' : ''}`}
+            onClick={handleDetectLivePickup}
+            disabled={isLocating}
+            title="Use My Device Live GPS for Safe Ride Pickup"
+          >
+            <Compass size={13} className={isLocating ? 'spin-icon' : ''} />
+            <span style={{ fontSize: '0.68rem' }}>
+              {isLocating ? 'Locating...' : isLiveGpsActive ? 'Live Pickup' : 'My GPS'}
+            </span>
+          </button>
+
           <button
             type="button"
             className="map-glass-btn"
@@ -386,6 +494,15 @@ export function SafeRideMap({
           <span className="map-telemetry-label">{isBooked ? 'Driver En Route' : 'Pickup ETA'}</span>
           <span className="map-telemetry-value">
             {isBooked ? `${driverEta} min away` : `${selectedPartner?.etaMinutes || 4} min away`}
+          </span>
+        </div>
+
+        <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }} />
+
+        <div className="map-telemetry-metric">
+          <span className="map-telemetry-label">Road Distance</span>
+          <span className="map-telemetry-value">
+            {roadTripKm} km
           </span>
         </div>
 
