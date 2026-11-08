@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
-import {
-  Maximize2, Minimize2, Plus, Minus,
-  ShieldCheck, Crosshair, Navigation, Compass, Radio
-} from 'lucide-react';
+import { Crosshair } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
 import { addDarkTileLayer } from './mapTiles';
 import {
@@ -205,16 +202,21 @@ export function LiveDeliveryMap({
     }).addTo(map);
     traveledLineRef.current = traveledLine;
 
-    // Store Marker
+    // Store Marker (Luxury Obsidian & Gold Badge)
     const storeIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
-        <div class="boozer-marker marker-store" title="${store.name}">
-          <span>🏪</span>
+        <div class="boozer-marker marker-store" title="${store.name}" style="
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #16161E; border: 2px solid #C5A059;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+        ">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C5A059" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
         </div>
       `,
-      iconSize: [38, 38],
-      iconAnchor: [19, 19]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
     const storeMarker = L.marker(store.coords, { icon: storeIcon }).addTo(map);
     storeMarker.bindPopup(`
@@ -228,16 +230,21 @@ export function LiveDeliveryMap({
       </div>
     `);
 
-    // Customer Destination Marker
+    // Customer Destination Marker (Warm Gold Luxury Indicator)
     const customerIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
-        <div class="boozer-marker marker-customer" title="Delivery Address">
-          <span>📍</span>
+        <div class="boozer-marker marker-customer" title="Delivery Address" style="
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #C5A059; border: 2px solid #FFFFFF;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+        ">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0C0C0F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
       `,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
     const customerMarker = L.marker(activeCustomer.coords, { icon: customerIcon }).addTo(map);
     customerMarker.bindPopup(`
@@ -259,7 +266,7 @@ export function LiveDeliveryMap({
       html: `
         <div class="marker-rider-container">
           <div class="marker-rider-badge">
-            <span>🛵</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0C0C0F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
             <span>${displayRiderName.split(' ')[0]} · ${currentSpeed} km/h</span>
           </div>
           <div class="marker-rider-beacon"></div>
@@ -391,7 +398,7 @@ export function LiveDeliveryMap({
             html: `
               <div class="marker-rider-container">
                 <div class="marker-rider-badge">
-                  <span>🛵</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0C0C0F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
                   <span>${displayRiderName.split(' ')[0]} · ${simSpeed} km/h</span>
                 </div>
                 <div class="marker-rider-beacon"></div>
@@ -533,92 +540,17 @@ export function LiveDeliveryMap({
     >
       <div ref={mapContainerRef} className="boozer-map-element" />
 
-      {/* Top Floating Glass Overlay */}
+      {/* Top Floating Overlay */}
       <div className="map-floating-overlay-top">
-        {/* Telemetry Indicator */}
-        <div className="map-telemetry-badge">
-          <span className="blinking-dot" />
-          <span>
-            {isLiveGpsActive ? '● LIVE DEVICE GPS STREAM' : isRealRoad ? '● LIVE OSRM ROAD ROUTING' : 'LIVE GPS · 10Hz TELEMETRY'}
-          </span>
-        </div>
-
-        {/* Map Control Button Group */}
         <div className="map-control-btn-group">
-          {/* Detect Live GPS Button */}
-          <button
-            type="button"
-            className={`map-glass-btn ${isLiveGpsActive ? 'active' : ''}`}
-            onClick={handleDetectLiveGps}
-            disabled={isLocating}
-            title="Use My Device Live GPS Location"
-          >
-            <Compass size={13} className={isLocating ? 'spin-icon' : ''} />
-            <span style={{ fontSize: '0.68rem' }}>
-              {isLocating ? 'Locating...' : isLiveGpsActive ? 'Live GPS Active' : 'My Live GPS'}
-            </span>
-          </button>
-
-          {/* Toggle 6.5km Excise Geofence */}
-          <button
-            type="button"
-            className={`map-glass-btn ${showGeofence ? 'active' : ''}`}
-            onClick={() => setShowGeofence(!showGeofence)}
-            title="Toggle 6.5 km Excise Boundary"
-          >
-            <ShieldCheck size={14} />
-            <span style={{ fontSize: '0.68rem' }}>6.5km Zone</span>
-          </button>
-
-          {/* Follow Rider */}
-          <button
-            type="button"
-            className={`map-glass-btn ${followRider ? 'active' : ''}`}
-            onClick={() => setFollowRider(!followRider)}
-            title="Auto-Center Rider"
-          >
-            <Navigation size={13} />
-            <span style={{ fontSize: '0.68rem' }}>Follow</span>
-          </button>
-
           {/* Fit Route */}
           <button
             type="button"
             className="map-glass-btn map-glass-btn-icon"
             onClick={handleFitRoute}
-            title="Fit Entire Route"
+            title="Re-center Route"
           >
             <Crosshair size={14} />
-          </button>
-
-          {/* Zoom In */}
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleZoomIn}
-            title="Zoom In"
-          >
-            <Plus size={14} />
-          </button>
-
-          {/* Zoom Out */}
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleZoomOut}
-            title="Zoom Out"
-          >
-            <Minus size={14} />
-          </button>
-
-          {/* Expand / Minimize */}
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleToggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen" : "Expand Map"}
-          >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
         </div>
       </div>

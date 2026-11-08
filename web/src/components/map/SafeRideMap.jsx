@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import {
-  Crosshair, Maximize2, Minimize2, Plus, Minus, MapPin, Compass
+  Crosshair, Compass
 } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
 import { addDarkTileLayer } from './mapTiles';
@@ -114,21 +114,21 @@ export function SafeRideMap({
     }).addTo(map);
     routeLineRef.current = routeLine;
 
-    // Pickup Marker (Golden Amber)
+    // Pickup Marker (Warm Gold Luxury Indicator)
     const pickupIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
         <div class="boozer-marker" style="
-          width: 34px; height: 34px; border-radius: 50%;
-          background: linear-gradient(135deg, #E7A13D 0%, #B87314 100%);
-          border: 2px solid #fff; display: flex; align-items: center; justify-content: center;
-          font-size: 0.95rem; box-shadow: 0 0 20px rgba(231, 161, 61, 0.8);
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #C5A059; border: 2px solid #FFFFFF;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
         ">
-          <span>🚕</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0C0C0F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
         </div>
       `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
     const pickupMarker = L.marker(activePickup.coords, { icon: pickupIcon }).addTo(map);
     pickupMarker.bindPopup(`
@@ -140,16 +140,21 @@ export function SafeRideMap({
     `);
     pickupMarkerRef.current = pickupMarker;
 
-    // Drop-off Marker (Emerald / Teal)
+    // Drop-off Marker (Obsidian & Gold Luxury Indicator)
     const dropoffIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
-        <div class="boozer-marker marker-customer" style="width: 34px; height: 34px;">
-          <span>🏠</span>
+        <div class="boozer-marker marker-customer" style="
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #16161E; border: 2px solid #C5A059;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+        ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C5A059" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
       `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
     const dropoffMarker = L.marker(dropoff.coords, { icon: dropoffIcon }).addTo(map);
     dropoffMarker.bindPopup(`
@@ -297,8 +302,8 @@ export function SafeRideMap({
     return L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
-        <div class="marker-cab-badge ${isSelected ? 'active' : ''}" style="background: ${tagBg}; border-color: ${isSelected ? 'var(--color-teal)' : brandColor};">
-          <span style="font-size: 0.8rem;">🚗</span>
+        <div class="marker-cab-badge ${isSelected ? 'active' : ''}" style="background: ${tagBg}; border-color: ${isSelected ? 'var(--color-gold)' : brandColor};">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${brandColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
           <div style="display: flex; flex-direction: column; line-height: 1.1;">
             <strong style="font-size: 0.68rem; color: #fff;">${cab.name}</strong>
             <span style="font-size: 0.62rem; color: ${brandColor}; font-weight: 700;">${cab.etaMinutes} min away</span>
@@ -411,11 +416,6 @@ export function SafeRideMap({
 
       {/* Top Floating Controls */}
       <div className="map-floating-overlay-top">
-        <div className="map-telemetry-badge">
-          <span className="blinking-dot" style={{ background: '#2DD4BF', boxShadow: '0 0 8px #2DD4BF' }} />
-          <span>{isLiveGpsActive ? '● LIVE DEVICE PICKUP GPS' : 'SAFE RIDE DISPATCH RADAR'}</span>
-        </div>
-
         <div className="map-control-btn-group">
           {/* My Live Location */}
           <button
@@ -433,48 +433,11 @@ export function SafeRideMap({
 
           <button
             type="button"
-            className="map-glass-btn"
-            onClick={handleFocusPickup}
-            title="Focus Pickup Location"
-          >
-            <MapPin size={13} />
-            <span style={{ fontSize: '0.68rem' }}>Pickup</span>
-          </button>
-
-          <button
-            type="button"
             className="map-glass-btn map-glass-btn-icon"
             onClick={handleFitRoute}
             title="Fit Entire Trip Route"
           >
             <Crosshair size={14} />
-          </button>
-
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleZoomIn}
-            title="Zoom In"
-          >
-            <Plus size={14} />
-          </button>
-
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleZoomOut}
-            title="Zoom Out"
-          >
-            <Minus size={14} />
-          </button>
-
-          <button
-            type="button"
-            className="map-glass-btn map-glass-btn-icon"
-            onClick={handleToggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen" : "Expand Map"}
-          >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
         </div>
       </div>

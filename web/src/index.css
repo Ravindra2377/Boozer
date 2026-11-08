@@ -990,7 +990,7 @@ h1, h2, h3, h4, .font-heading {
   left: 12px;
   right: 12px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   z-index: 400;
   pointer-events: none;
