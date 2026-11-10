@@ -4,7 +4,7 @@ import {
   ArrowRight, Key, UserCheck, Navigation, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { ORDER_STATE_MACHINE_STEPS } from '../../data/mockData';
-import { LiveDeliveryMap } from '../map/LiveDeliveryMap';
+import { DeliveryMap } from '../map/DeliveryMap';
 
 export function OrderTrackingScreen({
   order,
@@ -35,6 +35,12 @@ export function OrderTrackingScreen({
     }
   };
 
+  const dynamicDestination = {
+    name: "Delivery Destination",
+    address: order.deliveryAddress || "Villa 14, Silicon Meadows, Jubilee Hills, Hyderabad",
+    coords: [17.4210, 78.4230]
+  };
+
   return (
     <div className="screen-scroll-body" style={{ position: 'relative' }}>
       {/* Top Banner Matching Reference Image 1: "Your order is on the way! Arriving in 12 min" */}
@@ -63,13 +69,14 @@ export function OrderTrackingScreen({
         </div>
       </div>
 
-      {/* Live Interactive Delivery Route Map */}
-      <LiveDeliveryMap
+      {/* Production Delivery Route Map */}
+      <DeliveryMap
         order={order}
-        city={city}
-        height="300px"
+        destination={dynamicDestination}
+        height="320px"
         riderName="Rohit Kumar"
         riderVehicle="KA 01 AB 1234"
+        enableReplayControls={true}
         onTelemetryUpdate={(data) => setLiveTelemetry((prev) => ({ ...prev, ...data }))}
         isFrameMode={isFrameMode}
       />

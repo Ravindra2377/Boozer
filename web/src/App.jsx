@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { CustomerApp } from './components/customer/CustomerApp';
 import { RetailerPortal } from './components/retailer/RetailerPortal';
+import { RiderPortal } from './components/rider/RiderPortal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { OnboardingKycModal } from './components/customer/OnboardingKycModal';
 import { AuthModal } from './components/auth/AuthModal';
@@ -82,6 +83,10 @@ export function App() {
 
         {activeView === 'retailer' && (
           <RetailerPortal />
+        )}
+
+        {activeView === 'rider' && (
+          <RiderPortal />
         )}
 
         {activeView === 'admin' && (

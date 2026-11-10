@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ShieldCheck, Smartphone, Store, ShieldAlert, Clock, ShoppingBag, Eye, LogOut, LogIn, User
+  ShieldCheck, Smartphone, Store, ShieldAlert, Clock, ShoppingBag, Eye, LogOut, LogIn, User, Bike
 } from 'lucide-react';
 
 export function Header({
@@ -63,6 +63,15 @@ export function Header({
         >
           <Store size={16} />
           <span>Retailer Portal</span>
+        </button>
+
+        <button
+          className={`view-mode-btn ${activeView === 'rider' ? 'active' : ''}`}
+          onClick={() => setActiveView('rider')}
+          title="Courier Live GPS & OTP Terminal"
+        >
+          <Bike size={16} />
+          <span>Rider (Pilot)</span>
         </button>
 
         <button
