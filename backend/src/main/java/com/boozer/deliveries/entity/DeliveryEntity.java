@@ -41,10 +41,20 @@ public class DeliveryEntity {
     @Column(name = "rider_lng", precision = 10, scale = 7)
     private BigDecimal riderLng;
 
+    @Column(name = "rider_speed_kmh", precision = 5, scale = 2)
+    private BigDecimal riderSpeedKmh;
+
+    @Column(name = "rider_heading_degrees", precision = 5, scale = 2)
+    private BigDecimal riderHeadingDegrees;
+
+    @Column(name = "rider_location_updated_at")
+    private OffsetDateTime riderLocationUpdatedAt;
+
     @Column(nullable = false, length = 32)
     @Builder.Default
     private String status = "IN_TRANSIT";
 
+    @JsonIgnore
     @Column(name = "doorstep_otp", length = 6)
     @Builder.Default
     private String doorstepOtp = "4819";

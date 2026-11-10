@@ -43,21 +43,35 @@ public class SafetyService {
 
         List<TrustedContactEntity> sosContacts = trustedContactRepository.findByUserIdAndIsSosRecipientTrue(userId);
 
+        boolean locationKnown = (lat != null && lng != null);
+        String resolvedStatus = locationKnown ? "CONTACTS_NOTIFIED" : "CONTACTS_NOTIFIED_LOCATION_UNKNOWN";
+        String resolvedNotes = notes != null ? notes : "Emergency SOS hold triggered from user device";
+        if (!locationKnown) {
+            resolvedNotes = "[LOCATION_UNKNOWN] " + resolvedNotes + " - GPS coordinates unavailable at trigger time";
+        }
+
         SafetyEventEntity event = SafetyEventEntity.builder()
                 .user(user)
                 .eventType("SOS_TRIGGERED")
-                .status("CONTACTS_NOTIFIED")
-                .latitude(lat != null ? lat : new BigDecimal("17.4399"))
-                .longitude(lng != null ? lng : new BigDecimal("78.3908"))
-                .batteryLevel(batteryLevel != null ? batteryLevel : 78)
-                .notes(notes != null ? notes : "Emergency SOS hold triggered from user device")
+                .status(resolvedStatus)
+                .latitude(lat)
+                .longitude(lng)
+                .batteryLevel(batteryLevel)
+                .notes(resolvedNotes)
                 .contactsNotifiedCount(sosContacts.size())
                 .build();
 
         SafetyEventEntity saved = safetyEventRepository.save(event);
 
-        log.warn("EMERGENCY SOS TRIGGERED by user {} ({}). Coordinates: {}, {}. Notified {} trusted contacts.",
-                user.getId(), user.getFullName(), event.getLatitude(), event.getLongitude(), sosContacts.size());
+        log.warn("EMERGENCY SOS TRIGGERED by user {} ({}). Coordinates: {}, {} (Location Known: {}). Notified {} trusted contacts.",
+                user.getId(), user.getFullName(), event.getLatitude(), event.getLongitude(), locationKnown, sosContacts.size());
+
+        Map<String, Object> auditMetadata = new java.util.HashMap<>();
+        auditMetadata.put("contactsNotified", sosContacts.size());
+        auditMetadata.put("locationKnown", locationKnown);
+        if (event.getLatitude() != null) auditMetadata.put("lat", event.getLatitude());
+        if (event.getLongitude() != null) auditMetadata.put("lng", event.getLongitude());
+        if (batteryLevel != null) auditMetadata.put("batteryLevel", batteryLevel);
 
         auditLogService.logAction(
                 userId,
@@ -66,16 +80,20 @@ public class SafetyService {
                 "SAFETY_EVENT",
                 saved.getId().toString(),
                 null,
-                Map.of("contactsNotified", sosContacts.size(), "lat", event.getLatitude(), "lng", event.getLongitude())
+                auditMetadata
         );
+
+        String broadcastMessage = locationKnown
+                ? "Emergency broadcast dispatched to trusted contacts. Local emergency services standing by."
+                : "Emergency broadcast dispatched to trusted contacts (GPS location unavailable - contacts alerted). Local emergency services standing by.";
 
         return SosTriggerResult.builder()
                 .eventId(saved.getId())
-                .status("CONTACTS_NOTIFIED")
+                .status(resolvedStatus)
                 .notifiedContactsCount(sosContacts.size())
                 .contacts(sosContacts.stream().map(TrustedContactEntity::getName).toList())
                 .emergencyServicesNumber("112")
-                .message("Emergency broadcast dispatched to trusted contacts. Local emergency services standing by.")
+                .message(broadcastMessage)
                 .build();
     }
 

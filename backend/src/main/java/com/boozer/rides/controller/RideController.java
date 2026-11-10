@@ -59,11 +59,18 @@ public class RideController {
             @RequestBody BookRideRequest request
     ) {
         UUID userId = resolveUserId(headerUserId);
+        if (request.getPickupAddress() == null || request.getPickupAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Pickup address is required to book a safe ride.");
+        }
+        if (request.getDropoffAddress() == null || request.getDropoffAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Dropoff address is required to book a safe ride.");
+        }
+
         RideBookingEntity booking = rideService.bookRide(
                 userId,
                 request.getPartner() != null ? request.getPartner() : "UBER",
-                request.getPickupAddress() != null ? request.getPickupAddress() : "Road No 36, Jubilee Hills",
-                request.getDropoffAddress() != null ? request.getDropoffAddress() : "Banjara Hills, Hyderabad",
+                request.getPickupAddress().trim(),
+                request.getDropoffAddress().trim(),
                 request.getEstimatedFareInr() != null ? request.getEstimatedFareInr() : new BigDecimal("320.00")
         );
         return ResponseEntity.ok(ApiResponse.success("Safe ride booked successfully", booking));

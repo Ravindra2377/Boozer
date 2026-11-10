@@ -63,12 +63,16 @@ public class OrderController {
                     .orElseThrow(() -> new IllegalStateException("No licensed retailer registered."));
         }
 
+        if (request.getDeliveryAddress() == null || request.getDeliveryAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Delivery address is required to place an order.");
+        }
+
         OrderEntity order = orderService.createOrder(
                 userId,
                 retailerId,
                 request.getItems(),
-                request.getDeliveryAddress() != null ? request.getDeliveryAddress() : "Flat 402, Oakwood Residences, Jubilee Hills, Hyderabad",
-                request.getDeliveryNotes() != null ? request.getDeliveryNotes() : "Leave with security if not answered"
+                request.getDeliveryAddress().trim(),
+                request.getDeliveryNotes() != null ? request.getDeliveryNotes() : "Standard doorstep delivery"
         );
 
         return ResponseEntity.ok(ApiResponse.success("Order placed successfully", order));

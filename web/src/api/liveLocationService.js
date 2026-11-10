@@ -158,7 +158,9 @@ export async function fetchBackendDelivery(orderId) {
         riderLat: delivery.riderLat ? Number(delivery.riderLat) : null,
         riderLng: delivery.riderLng ? Number(delivery.riderLng) : null,
         status: delivery.status || 'IN_TRANSIT',
-        doorstepOtp: delivery.doorstepOtp || '8492'
+        speedKmh: delivery.riderSpeedKmh != null ? Number(delivery.riderSpeedKmh) : null,
+        headingDegrees: delivery.riderHeadingDegrees != null ? Number(delivery.riderHeadingDegrees) : null,
+        updatedAt: delivery.riderLocationUpdatedAt || null
       };
     }
   } catch (err) {

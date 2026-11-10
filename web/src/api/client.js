@@ -273,9 +273,51 @@ class ApiClient {
         riderLat: 17.4339,
         riderLng: 78.3978,
         status: 'IN_TRANSIT',
-        doorstepOtp: '4819',
+        riderSpeedKmh: 28,
+        riderHeadingDegrees: 120,
+        riderLocationUpdatedAt: new Date().toISOString(),
       }
     );
+  }
+
+  async updateRiderLocation(orderId, { lat, lng, speedKmh, headingDegrees, accuracy }) {
+    return this.request(`/deliveries/order/${orderId}/location`, {
+      method: 'POST',
+      body: JSON.stringify({
+        lat,
+        lng,
+        speedKmh: speedKmh || null,
+        headingDegrees: headingDegrees || null,
+        accuracy: accuracy || null,
+      }),
+    });
+  }
+
+  subscribeDeliveryStream(orderId, onMessage, onError) {
+    if (typeof EventSource === 'undefined') return () => {};
+    const url = `${this.baseUrl}/deliveries/order/${orderId}/stream`;
+    const eventSource = new EventSource(url);
+
+    const handlePayload = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (onMessage) onMessage(data);
+      } catch (err) {
+        console.error('Failed to parse SSE telemetry:', err);
+      }
+    };
+
+    eventSource.addEventListener('RIDER_LOCATION', handlePayload);
+    eventSource.addEventListener('INIT_TELEMETRY', handlePayload);
+    eventSource.onmessage = handlePayload;
+
+    eventSource.onerror = (err) => {
+      if (onError) onError(err);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }
 
   async verifyDoorstepAge(orderId, otp) {

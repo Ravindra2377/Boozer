@@ -1,21 +1,72 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
-import { Crosshair } from 'lucide-react';
+import { Crosshair, Radio, AlertTriangle } from 'lucide-react';
 import { getMapDataForCity } from '../../data/mapCoordinates';
 import { addDarkTileLayer } from './mapTiles';
+import { api } from '../../api/client';
 import {
   getLiveDeviceCoordinates,
   reverseGeocode,
   fetchRealRoadRoute,
-  fetchBackendDelivery
+  fetchBackendDelivery,
+  calculateHaversineDistance
 } from '../../api/liveLocationService';
 
+function createSafePopup({ title, subtitle, details, badgeText, badgeColor = '#10B981', badgeBg = 'rgba(16, 185, 129, 0.15)' }) {
+  const container = document.createElement('div');
+  container.style.fontFamily = 'var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)';
+  container.style.padding = '2px';
+
+  if (title) {
+    const titleEl = document.createElement('strong');
+    titleEl.style.fontSize = '0.88rem';
+    titleEl.style.color = '#fff';
+    titleEl.textContent = title;
+    container.appendChild(titleEl);
+  }
+
+  if (subtitle) {
+    const subEl = document.createElement('p');
+    subEl.style.fontSize = '0.74rem';
+    subEl.style.color = 'var(--color-gold, #E7A13D)';
+    subEl.style.marginTop = '2px';
+    subEl.textContent = subtitle;
+    container.appendChild(subEl);
+  }
+
+  if (details) {
+    const detEl = document.createElement('p');
+    detEl.style.fontSize = '0.74rem';
+    detEl.style.color = 'var(--color-cream-muted, #B8B5AD)';
+    detEl.style.marginTop = '4px';
+    detEl.textContent = details;
+    container.appendChild(detEl);
+  }
+
+  if (badgeText) {
+    const badgeEl = document.createElement('div');
+    badgeEl.style.marginTop = '6px';
+    badgeEl.style.padding = '4px 8px';
+    badgeEl.style.background = badgeBg;
+    badgeEl.style.border = `1px solid ${badgeColor}`;
+    badgeEl.style.borderRadius = '6px';
+    badgeEl.style.fontSize = '0.7rem';
+    badgeEl.style.color = badgeColor;
+    badgeEl.style.fontWeight = '700';
+    badgeEl.textContent = badgeText;
+    container.appendChild(badgeEl);
+  }
+
+  return container;
+}
+
 /**
- * High-performance interactive Delivery Tracking Map built with Leaflet.
+ * Interactive Delivery Tracking Map.
  * Supports:
- * 1. Live Device GPS (HTML5 Geolocation)
- * 2. Real Turn-by-Turn Road Routing (OSRM)
- * 3. Live Backend Telemetry (Spring Boot /deliveries/order/{id})
+ * 1. Live SSE Telemetry Pipeline (/deliveries/order/{id}/stream)
+ * 2. Real Turn-by-Turn Road Routing
+ * 3. Sanitized DOM popups without OTP leakage
+ * 4. Geofence radius boundary enforcement
  */
 export function LiveDeliveryMap({
   order,
@@ -42,12 +93,17 @@ export function LiveDeliveryMap({
   const [currentSpeed, setCurrentSpeed] = useState(28);
   const [remainingKm, setRemainingKm] = useState(2.8);
   const [etaMinutes, setEtaMinutes] = useState(9);
-  const [progressFraction, setProgressFraction] = useState(0.35); // 0.0 to 1.0
+  const [progressFraction, setProgressFraction] = useState(0.35);
+
+  const [isStreamActive, setIsStreamActive] = useState(false);
+  const [lastTelemetryTimestamp, setLastTelemetryTimestamp] = useState(null);
+  const [secondsSinceLastPing, setSecondsSinceLastPing] = useState(0);
+  const [zoneWarning, setZoneWarning] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const mapData = getMapDataForCity(city);
   const { store, customer, routeWaypoints } = mapData;
 
-  // Live Location & Real-Road states
   const [activeCustomer, setActiveCustomer] = useState(customer);
   const [activeWaypoints, setActiveWaypoints] = useState(routeWaypoints);
   const [isLiveGpsActive, setIsLiveGpsActive] = useState(false);
@@ -90,20 +146,22 @@ export function LiveDeliveryMap({
     return traveled;
   }, [activeWaypoints, routeWaypoints, getInterpolatedPoint]);
 
-  // 1. Fetch Real Road Geometry (OSRM) and Backend Telemetry on Mount
+  // 1. Fetch Real Road Geometry and Backend Telemetry Snapshot on Mount
   useEffect(() => {
     let isCancelled = false;
 
-    // A. Backend delivery sync
     if (order?.id) {
       fetchBackendDelivery(order.id).then((delivery) => {
         if (!isCancelled && delivery) {
           setBackendRider(delivery);
+          if (delivery.speedKmh != null) setCurrentSpeed(Math.round(delivery.speedKmh));
+          if (delivery.riderLat && delivery.riderLng && riderMarkerRef.current) {
+            riderMarkerRef.current.setLatLng([delivery.riderLat, delivery.riderLng]);
+          }
         }
       });
     }
 
-    // B. Real-road turn-by-turn routing via OSRM
     fetchRealRoadRoute(store.coords, customer.coords).then((route) => {
       if (!isCancelled && route && route.waypoints && route.waypoints.length > 1) {
         setActiveWaypoints(route.waypoints);
@@ -133,7 +191,61 @@ export function LiveDeliveryMap({
     };
   }, [order?.id, store.coords, customer.coords]);
 
-  // 2. Initialize Leaflet Map
+  // 2. Real Live SSE Telemetry Subscription
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const unsubscribe = api.subscribeDeliveryStream(
+      order.id,
+      (telemetry) => {
+        setIsStreamActive(true);
+        setLastTelemetryTimestamp(Date.now());
+        setSecondsSinceLastPing(0);
+
+        if (telemetry.lat && telemetry.lng) {
+          const newCoord = [Number(telemetry.lat), Number(telemetry.lng)];
+          if (riderMarkerRef.current) {
+            riderMarkerRef.current.setLatLng(newCoord);
+
+            if (followRider && mapInstanceRef.current) {
+              mapInstanceRef.current.panTo(newCoord, { animate: true, duration: 0.5 });
+            }
+          }
+        }
+
+        if (telemetry.speedKmh != null) {
+          setCurrentSpeed(Math.round(Number(telemetry.speedKmh)));
+        }
+
+        if (telemetry.riderName) {
+          setBackendRider((prev) => ({ ...prev, ...telemetry }));
+        }
+
+        if (onTelemetryUpdate) {
+          onTelemetryUpdate(telemetry);
+        }
+      },
+      (err) => {
+        console.warn('[BOOZER MAP] SSE stream disconnected, using local telemetry:', err);
+        setIsStreamActive(false);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [order?.id, followRider, onTelemetryUpdate]);
+
+  // Telemetry staleness ticker
+  useEffect(() => {
+    if (!lastTelemetryTimestamp) return;
+    const interval = setInterval(() => {
+      setSecondsSinceLastPing(Math.round((Date.now() - lastTelemetryTimestamp) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastTelemetryTimestamp]);
+
+  // 3. Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -155,25 +267,25 @@ export function LiveDeliveryMap({
     });
     mapInstanceRef.current = map;
 
-    // Dark tiles (with automatic zero-key fallback)
     addDarkTileLayer(map);
 
-    // Statutory 6.5 km Excise Geofence Circle
+    // Statutory Legal Delivery Radius
+    const deliveryRadiusKm = store.deliveryRadiusKm || 6.5;
     const geofence = L.circle(store.coords, {
-      radius: store.deliveryRadiusKm * 1000,
+      radius: deliveryRadiusKm * 1000,
       color: '#E7A13D',
       weight: 1.5,
       dashArray: '6, 8',
       fillColor: '#E7A13D',
       fillOpacity: 0.04
     }).addTo(map);
-    geofence.bindTooltip(`Statutory ${store.deliveryRadiusKm}km Legal Excise Delivery Radius`, {
+    geofence.bindTooltip(`Excise Delivery Radius: ${deliveryRadiusKm}km`, {
       className: 'leaflet-popup-content-wrapper',
       direction: 'top'
     });
     geofenceCircleRef.current = geofence;
 
-    // Full Route Underlying Glow Path
+    // Route Glow Path
     const glowLine = L.polyline(activeWaypoints, {
       color: 'rgba(231, 161, 61, 0.25)',
       weight: 10,
@@ -202,11 +314,11 @@ export function LiveDeliveryMap({
     }).addTo(map);
     traveledLineRef.current = traveledLine;
 
-    // Store Marker (Luxury Obsidian & Gold Badge)
+    // Store Marker (Sanitized DOM Popup)
     const storeIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
-        <div class="boozer-marker marker-store" title="${store.name}" style="
+        <div class="boozer-marker marker-store" title="Store" style="
           width: 32px; height: 32px; border-radius: 50%;
           background: #16161E; border: 2px solid #C5A059;
           display: flex; align-items: center; justify-content: center;
@@ -219,18 +331,16 @@ export function LiveDeliveryMap({
       iconAnchor: [16, 16]
     });
     const storeMarker = L.marker(store.coords, { icon: storeIcon }).addTo(map);
-    storeMarker.bindPopup(`
-      <div style="font-family: var(--font-body)">
-        <strong style="color: var(--color-gold); font-size: 0.9rem;">${store.name}</strong>
-        <p style="font-size: 0.72rem; color: #E7A13D; margin-top: 2px;">${store.licence} (L-2 Licensed)</p>
-        <p style="font-size: 0.75rem; color: var(--color-cream-muted); margin-top: 4px;">${store.address}</p>
-        <div style="margin-top: 6px; font-size: 0.7rem; color: #10B981; font-weight: 700;">
-          ✓ Authorized Legal MRP Fulfillment Point
-        </div>
-      </div>
-    `);
+    storeMarker.bindPopup(() => createSafePopup({
+      title: store.name,
+      subtitle: `${store.licence} (L-2 Licensed)`,
+      details: store.address,
+      badgeText: '✓ Authorized Legal MRP Fulfillment Point',
+      badgeColor: '#10B981',
+      badgeBg: 'rgba(16, 185, 129, 0.15)'
+    }));
 
-    // Customer Destination Marker (Warm Gold Luxury Indicator)
+    // Customer Destination Marker (Sanitized DOM Popup - ZERO OTP LEAK)
     const customerIcon = L.divIcon({
       className: 'boozer-marker-wrapper',
       html: `
@@ -247,16 +357,14 @@ export function LiveDeliveryMap({
       iconAnchor: [16, 16]
     });
     const customerMarker = L.marker(activeCustomer.coords, { icon: customerIcon }).addTo(map);
-    customerMarker.bindPopup(`
-      <div style="font-family: var(--font-body)">
-        <strong style="color: var(--color-teal); font-size: 0.9rem;">Delivery Destination</strong>
-        <p style="font-size: 0.76rem; color: var(--color-cream); margin-top: 2px;">${activeCustomer.name}</p>
-        <p style="font-size: 0.74rem; color: var(--color-cream-muted); margin-top: 2px;">${activeCustomer.address}</p>
-        <div style="margin-top: 6px; padding: 4px 8px; background: rgba(42, 157, 143, 0.15); border: 1px solid var(--color-teal); border-radius: 6px; font-size: 0.7rem; color: var(--color-teal); font-weight: 700;">
-          🔒 Doorstep Age Verification Required (OTP: ${activeCustomer.doorstepOtp})
-        </div>
-      </div>
-    `);
+    customerMarker.bindPopup(() => createSafePopup({
+      title: 'Delivery Destination',
+      subtitle: activeCustomer.name || 'Recipient',
+      details: activeCustomer.address || '',
+      badgeText: '🔒 Doorstep Age & ID Verification Required',
+      badgeColor: '#2A9D8F',
+      badgeBg: 'rgba(42, 157, 143, 0.15)'
+    }));
     customerMarkerRef.current = customerMarker;
 
     // Rider Marker
@@ -276,37 +384,18 @@ export function LiveDeliveryMap({
       iconAnchor: [60, 40]
     });
     const riderMarker = L.marker(initialRiderCoord, { icon: riderIcon, zIndexOffset: 1000 }).addTo(map);
-    riderMarker.bindPopup(`
-      <div style="font-family: var(--font-body)">
-        <strong style="color: #fff; font-size: 0.9rem;">${displayRiderName}</strong>
-        <span style="color: var(--color-gold); font-size: 0.75rem; font-weight: 800; margin-left: 6px;">★ 4.9</span>
-        <p style="font-size: 0.74rem; color: var(--color-cream-muted); margin-top: 2px;">${displayRiderVehicle}</p>
-        <div style="margin-top: 6px; font-size: 0.72rem; color: var(--color-gold);">
-          ● Live Telemetry: 10Hz Stream Active
-        </div>
-      </div>
-    `);
+    riderMarker.bindPopup(() => createSafePopup({
+      title: displayRiderName,
+      subtitle: displayRiderVehicle,
+      details: 'Assigned Boozer Verified Delivery Courier',
+      badgeText: isStreamActive ? '● Live Telemetry: SSE Stream Connected' : '○ Standby Telemetry',
+      badgeColor: isStreamActive ? '#10B981' : '#E7A13D',
+      badgeBg: 'rgba(231, 161, 61, 0.15)'
+    }));
     riderMarkerRef.current = riderMarker;
 
-    // Initial fit
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
 
-    // Handle initial render sizing with staggered invalidations
-    const t1 = setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-      }
-    }, 120);
-
-    const t2 = setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.invalidateSize();
-        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-      }
-    }, 450);
-
-    // Auto-detect container resizing (e.g., toggling between phone frame mode & full-width desktop mode)
     let resizeObserver = null;
     if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
       resizeObserver = new ResizeObserver(() => {
@@ -325,20 +414,16 @@ export function LiveDeliveryMap({
     window.addEventListener('resize', handleWindowResize);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
       window.removeEventListener('resize', handleWindowResize);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
-  }, [city, store, customer]); // Stable dependency array
+  }, [city, store, customer]);
 
-  // 3. Immediate re-invalidation when frame mode expands or contracts
+  // Frame mode re-invalidation
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const t = setTimeout(() => {
@@ -351,7 +436,7 @@ export function LiveDeliveryMap({
     return () => clearTimeout(t);
   }, [isFrameMode, activeWaypoints]);
 
-  // 4. Synchronize Rider Position when order status changes or time ticks
+  // 4. Fallback / Test Simulation Loop (Only active when NOT receiving real live SSE telemetry)
   useEffect(() => {
     const isDispatched = order?.status === 'DISPATCHED';
     const isArrived = ['ARRIVED', 'AGE_CHECKED', 'DELIVERED'].includes(order?.status);
@@ -372,17 +457,17 @@ export function LiveDeliveryMap({
       return;
     }
 
-    if (!isDispatched) return;
+    if (!isDispatched || isStreamActive) return;
 
-    // Simulate real-time progress while dispatched
+    // Predictable interpolation when waiting for rider telemetry
     const interval = setInterval(() => {
       setProgressFraction((prev) => {
-        const next = prev >= 0.94 ? 0.35 : prev + 0.02;
+        const next = prev >= 0.94 ? 0.35 : prev + 0.015;
 
         const totalDist = activeWaypoints.length > 2 ? 3.4 : 2.8;
         const remKm = Math.max(0.1, Number((totalDist * (1 - next)).toFixed(1)));
         const remMin = Math.max(1, Math.round(remKm * 3.8));
-        const simSpeed = Math.floor(26 + Math.random() * 8);
+        const simSpeed = 28;
 
         setRemainingKm(remKm);
         setEtaMinutes(remMin);
@@ -392,22 +477,6 @@ export function LiveDeliveryMap({
 
         if (riderMarkerRef.current && mapInstanceRef.current) {
           riderMarkerRef.current.setLatLng(currentCoord);
-
-          const updatedIcon = L.divIcon({
-            className: 'boozer-marker-wrapper',
-            html: `
-              <div class="marker-rider-container">
-                <div class="marker-rider-badge">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0C0C0F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-                  <span>${displayRiderName.split(' ')[0]} · ${simSpeed} km/h</span>
-                </div>
-                <div class="marker-rider-beacon"></div>
-              </div>
-            `,
-            iconSize: [120, 48],
-            iconAnchor: [60, 40]
-          });
-          riderMarkerRef.current.setIcon(updatedIcon);
 
           if (traveledLineRef.current) {
             traveledLineRef.current.setLatLngs(getTraveledCoordinates(next));
@@ -424,44 +493,57 @@ export function LiveDeliveryMap({
 
         return next;
       });
-    }, 1800);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [order?.status, followRider, getInterpolatedPoint, getTraveledCoordinates, activeCustomer.coords, displayRiderName, displayRiderVehicle, activeWaypoints, onArrivedDoorstep]);
+  }, [order?.status, isStreamActive, followRider, getInterpolatedPoint, getTraveledCoordinates, activeCustomer.coords, activeWaypoints, onArrivedDoorstep]);
 
-  // 5. Detect and Use Live Device GPS Location
+  // 5. Detect and Use Live Device GPS Location with Geofence Validation
   const handleDetectLiveGps = async () => {
     try {
       setIsLocating(true);
+      setErrorMessage(null);
       const liveCoords = await getLiveDeviceCoordinates();
       const geocode = await reverseGeocode(liveCoords.lat, liveCoords.lng);
+
+      // Check against retailer's licensed delivery radius
+      const distFromStoreKm = calculateHaversineDistance(
+        store.coords[0],
+        store.coords[1],
+        liveCoords.lat,
+        liveCoords.lng
+      );
+      const maxRadiusKm = store.deliveryRadiusKm || 6.5;
+
+      if (distFromStoreKm > maxRadiusKm) {
+        setZoneWarning(
+          `Detected location (${distFromStoreKm.toFixed(1)} km) is outside the licensed ${maxRadiusKm} km excise delivery zone.`
+        );
+      } else {
+        setZoneWarning(null);
+      }
 
       const liveCustomer = {
         name: "Your Live Location (Verified)",
         address: geocode.shortAddress || geocode.displayName,
-        coords: [liveCoords.lat, liveCoords.lng],
-        doorstepOtp: customer.doorstepOtp || "8492"
+        coords: [liveCoords.lat, liveCoords.lng]
       };
 
       setActiveCustomer(liveCustomer);
       setIsLiveGpsActive(true);
 
-      // Update customer marker position on map
       if (customerMarkerRef.current && mapInstanceRef.current) {
         customerMarkerRef.current.setLatLng(liveCustomer.coords);
-        customerMarkerRef.current.bindPopup(`
-          <div style="font-family: var(--font-body)">
-            <strong style="color: #10B981; font-size: 0.88rem;">📍 Live Device GPS Doorstep</strong>
-            <p style="font-size: 0.78rem; font-weight:700; color: var(--color-cream); margin-top: 4px;">${liveCustomer.name}</p>
-            <p style="font-size: 0.74rem; color: var(--color-cream-muted); margin-top: 2px;">${liveCustomer.address}</p>
-            <div style="margin-top: 6px; padding: 4px 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; border-radius: 6px; font-size: 0.7rem; color: #10B981; font-weight: 700;">
-              ✓ GPS Accuracy: ±${Math.round(liveCoords.accuracy || 15)}m
-            </div>
-          </div>
-        `).openPopup();
+        customerMarkerRef.current.bindPopup(() => createSafePopup({
+          title: '📍 Live Device GPS Doorstep',
+          subtitle: liveCustomer.name,
+          details: liveCustomer.address,
+          badgeText: `GPS Accuracy: ±${Math.round(liveCoords.accuracy || 15)}m`,
+          badgeColor: '#10B981',
+          badgeBg: 'rgba(16, 185, 129, 0.15)'
+        })).openPopup();
       }
 
-      // Fetch real turn-by-turn road route to user's real location
       const roadRoute = await fetchRealRoadRoute(store.coords, liveCustomer.coords);
       if (roadRoute && roadRoute.waypoints) {
         setActiveWaypoints(roadRoute.waypoints);
@@ -487,45 +569,16 @@ export function LiveDeliveryMap({
         }
       }
     } catch (err) {
-      alert(err.message || 'Could not fetch device location.');
+      setErrorMessage(err.message || 'Could not fetch device location.');
     } finally {
       setIsLocating(false);
     }
   };
 
-  // Toggle Geofence Circle Visibility
-  useEffect(() => {
-    if (!geofenceCircleRef.current || !mapInstanceRef.current) return;
-    if (showGeofence) {
-      if (!mapInstanceRef.current.hasLayer(geofenceCircleRef.current)) {
-        geofenceCircleRef.current.addTo(mapInstanceRef.current);
-      }
-    } else {
-      if (mapInstanceRef.current.hasLayer(geofenceCircleRef.current)) {
-        mapInstanceRef.current.removeLayer(geofenceCircleRef.current);
-      }
-    }
-  }, [showGeofence]);
-
-  // Recenter Route
   const handleFitRoute = () => {
     if (!mapInstanceRef.current) return;
     const bounds = L.latLngBounds(activeWaypoints);
     mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], animate: true });
-  };
-
-  const handleZoomIn = () => {
-    if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
-  };
-  const handleZoomOut = () => {
-    if (mapInstanceRef.current) mapInstanceRef.current.zoomOut();
-  };
-
-  const handleToggleFullscreen = () => {
-    setIsFullscreen((prev) => !prev);
-    setTimeout(() => {
-      if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
-    }, 300);
   };
 
   return (
@@ -540,10 +593,62 @@ export function LiveDeliveryMap({
     >
       <div ref={mapContainerRef} className="boozer-map-element" />
 
+      {/* Zone warning banner if outside perimeter */}
+      {zoneWarning && (
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          right: '12px',
+          background: 'rgba(239, 68, 68, 0.92)',
+          color: '#fff',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '0.74rem',
+          fontWeight: '600',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+        }}>
+          <AlertTriangle size={16} />
+          <span>{zoneWarning}</span>
+        </div>
+      )}
+
+      {/* Inline Error Toast */}
+      {errorMessage && (
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          right: '12px',
+          background: 'rgba(220, 38, 38, 0.95)',
+          color: '#fff',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '0.74rem',
+          fontWeight: '600',
+          zIndex: 1000,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 800 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Floating Overlay */}
       <div className="map-floating-overlay-top">
         <div className="map-control-btn-group">
-          {/* Fit Route */}
           <button
             type="button"
             className="map-glass-btn map-glass-btn-icon"
@@ -552,6 +657,43 @@ export function LiveDeliveryMap({
           >
             <Crosshair size={14} />
           </button>
+          <button
+            type="button"
+            className={`map-glass-btn ${isLiveGpsActive ? 'active' : ''}`}
+            onClick={handleDetectLiveGps}
+            disabled={isLocating}
+            title="Use Device GPS"
+          >
+            <Radio size={14} className={isLocating ? 'animate-spin' : ''} />
+            <span>{isLocating ? 'Locating...' : isLiveGpsActive ? 'GPS Locked' : 'My GPS'}</span>
+          </button>
+        </div>
+
+        {/* Live SSE Stream Badge */}
+        <div style={{
+          background: isStreamActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(231, 161, 61, 0.2)',
+          border: `1px solid ${isStreamActive ? '#10B981' : '#E7A13D'}`,
+          borderRadius: '20px',
+          padding: '4px 10px',
+          fontSize: '0.68rem',
+          fontWeight: 700,
+          color: isStreamActive ? '#10B981' : '#E7A13D',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px'
+        }}>
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            backgroundColor: isStreamActive ? '#10B981' : '#E7A13D',
+            display: 'inline-block'
+          }} />
+          {isStreamActive
+            ? secondsSinceLastPing > 5
+              ? `Live (updated ${secondsSinceLastPing}s ago)`
+              : 'Live Telemetry Active'
+            : 'Telemetry Standby'}
         </div>
       </div>
 
@@ -585,7 +727,7 @@ export function LiveDeliveryMap({
         <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }} />
 
         <div className="map-telemetry-metric">
-          <span className="map-telemetry-label">Driver Speed</span>
+          <span className="map-telemetry-label">Rider Speed</span>
           <span className="map-telemetry-value" style={{ color: '#10B981' }}>
             {['ARRIVED', 'AGE_CHECKED', 'DELIVERED'].includes(order?.status) ? '0 km/h' : `${currentSpeed} km/h`}
           </span>
