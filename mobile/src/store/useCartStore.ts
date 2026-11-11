@@ -4,7 +4,7 @@ export interface ProductItem {
   id: string;
   name: string;
   brand: string;
-  category: 'BEER' | 'WHISKY' | 'VODKA' | 'RUM' | 'WINE' | 'TEQUILA' | 'MIXERS_AND_SODA';
+  category: 'BEER' | 'WHISKY' | 'VODKA' | 'RUM' | 'WINE' | 'GIN' | 'TEQUILA' | 'MIXERS_AND_SODA';
   abv: number;
   volumeMl: number;
   priceLegalMrp: number;

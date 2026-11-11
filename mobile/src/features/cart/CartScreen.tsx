@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { colors } from '../../theme/colors';
+import * as Haptics from 'expo-haptics';
+import { colors, RADIUS, SPACING } from '../../theme';
 import { useCartStore } from '../../store/useCartStore';
+import { SurfaceCard, AppButton } from '../../components/SharedUI';
+import { LiquidGlass } from '../../components/LiquidGlass';
 
 interface CartScreenProps {
   onCheckoutSuccess: () => void;
@@ -23,14 +26,22 @@ export const CartScreen: React.FC<CartScreenProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getSubtotal();
-  const total = getTotal();
+  const deliveryFee = 49.0;
+  const excisePackagingFee = 20.0;
+  const originalSubtotal = Math.round(subtotal * 1.08);
+  const totalSavings = originalSubtotal - subtotal;
+  const total = subtotal + deliveryFee + excisePackagingFee;
 
   const handlePay = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
       clearCart();
-      Alert.alert('Payment Captured', 'Razorpay payment successful. Order BZ-20261105-4819 placed!');
+      Alert.alert(
+        'Excise Order Confirmed',
+        'Razorpay payment captured. Delivery partner assigned from legal excise depot!'
+      );
       onCheckoutSuccess();
     }, 1200);
   };
@@ -39,105 +50,166 @@ export const CartScreen: React.FC<CartScreenProps> = ({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Cart & Checkout</Text>
-        <TouchableOpacity onPress={onClose}>
+        <View>
+          <Text style={styles.title}>Review & Checkout</Text>
+          <Text style={styles.subTitle}>10-Minute Hyperlocal Excise Delivery</Text>
+        </View>
+        <TouchableOpacity
+          onPress={onClose}
+          style={styles.closeBtn}
+          activeOpacity={0.7}
+        >
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {items.length === 0 ? (
           <View style={styles.emptyBox}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1A1A22', alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderWidth: 1, borderColor: colors.cardBorder }}>
-              <Text style={{ fontSize: 18, color: colors.creamMuted }}>0</Text>
+            <View style={styles.emptyCircle}>
+              <Text style={styles.emptyIcon}>🛒</Text>
             </View>
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
-            <Text style={styles.emptySub}>Add legal beverages from the catalog to proceed.</Text>
+            <Text style={styles.emptySub}>
+              Select your favorite beverages from our verified excise catalog.
+            </Text>
+            <AppButton
+              label="Explore Catalog"
+              onPress={onClose}
+              variant="gradient"
+              style={{ marginTop: 18 }}
+            />
           </View>
         ) : (
           <>
-            {/* Delivery Location Check */}
-            <View style={styles.addressBox}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.addressTitle}>Delivery Destination</Text>
-                <Text style={styles.addressDesc}>Villa 14, Silicon Meadows, Jubilee Hills</Text>
-                <Text style={styles.geofenceBadge}>Within 6.5km legal delivery perimeter</Text>
-              </View>
-            </View>
-
-            {/* Cart Items */}
-            {items.map((entry) => (
-              <View key={entry.product.id} style={styles.itemRow}>
+            {/* Delivery Destination SurfaceCard */}
+            <SurfaceCard style={styles.destinationCard}>
+              <View style={styles.destHeader}>
+                <Text style={styles.destPin}>📍</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName}>{entry.product.name}</Text>
+                  <Text style={styles.destTitle}>Delivery Destination</Text>
+                  <Text style={styles.destAddress}>
+                    Villa 14, Silicon Meadows, Jubilee Hills, Hyderabad
+                  </Text>
+                </View>
+                <View style={styles.verifiedZoneTag}>
+                  <Text style={styles.verifiedZoneText}>LEGAL ZONE</Text>
+                </View>
+              </View>
+              <Text style={styles.geofenceNote}>
+                ✓ Verified within statutory 6.5km legal excise depot radius
+              </Text>
+            </SurfaceCard>
+
+            {/* Savings Banner */}
+            {totalSavings > 0 && (
+              <View style={styles.savingsBanner}>
+                <Text style={styles.savingsIcon}>🎉</Text>
+                <Text style={styles.savingsText}>
+                  You're saving <Text style={styles.savingsHighlight}>₹{totalSavings}</Text> below statutory market MRP!
+                </Text>
+              </View>
+            )}
+
+            {/* Cart Items List */}
+            <Text style={styles.sectionLabel}>ITEMS IN CART ({items.length})</Text>
+            {items.map((entry) => (
+              <SurfaceCard key={entry.product.id} style={styles.itemCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemBrand}>{entry.product.brand}</Text>
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {entry.product.name}
+                  </Text>
+                  <Text style={styles.itemMeta}>
+                    {entry.product.abv}% ABV · {entry.product.volumeMl}ml
+                  </Text>
                   <Text style={styles.itemPrice}>
-                    ₹{entry.product.priceLegalMrp.toLocaleString('en-IN')} × {entry.quantity}
+                    ₹{entry.product.priceLegalMrp.toLocaleString('en-IN')}
                   </Text>
                 </View>
 
-                <View style={styles.qtyControls}>
+                <View style={styles.qtyControl}>
                   <TouchableOpacity
                     onPress={() => updateQuantity(entry.product.id, entry.quantity - 1)}
                     style={styles.qtyBtn}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.qtyBtnText}>-</Text>
+                    <Text style={styles.qtyBtnText}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.qtyValue}>{entry.quantity}</Text>
                   <TouchableOpacity
                     onPress={() => updateQuantity(entry.product.id, entry.quantity + 1)}
                     style={styles.qtyBtn}
+                    activeOpacity={0.7}
                   >
                     <Text style={styles.qtyBtnText}>+</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </SurfaceCard>
             ))}
 
-            {/* Safe Ride Credit Promotion */}
-            <View style={styles.safeRidePromo}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.safeRideTitle}>Safe Ride Credit Included (₹150)</Text>
-                <Text style={styles.safeRideDesc}>
-                  Order activates a ₹150 Uber/Ola discount voucher valid for 24h.
+            {/* Responsible Transit Voucher Card */}
+            <SurfaceCard style={styles.rideCard}>
+              <View style={styles.rideLeft}>
+                <View style={styles.rideBadge}>
+                  <Text style={styles.rideBadgeText}>RESPONSIBLE DRINKING</Text>
+                </View>
+                <Text style={styles.rideTitle}>₹150 Safe Ride Credit Included</Text>
+                <Text style={styles.rideSub}>
+                  Automatic voucher credit sent to Uber/Ola for your safe return.
                 </Text>
               </View>
-            </View>
+              <View style={styles.ridePill}>
+                <Text style={styles.ridePillText}>FREE</Text>
+              </View>
+            </SurfaceCard>
 
-            {/* Price Breakdown */}
-            <View style={styles.breakdownCard}>
-              <View style={styles.breakdownRow}>
-                <Text style={styles.breakdownLabel}>Subtotal (Statutory MRP)</Text>
-                <Text style={styles.breakdownVal}>₹{subtotal.toFixed(2)}</Text>
+            {/* Bill Summary */}
+            <SurfaceCard style={styles.billCard}>
+              <Text style={styles.billHeader}>Bill Summary</Text>
+
+              <View style={styles.billRow}>
+                <Text style={styles.billLabel}>Item Total (Statutory MRP)</Text>
+                <Text style={styles.billVal}>₹{subtotal.toFixed(2)}</Text>
               </View>
-              <View style={styles.breakdownRow}>
-                <Text style={styles.breakdownLabel}>Delivery Partner Fee</Text>
-                <Text style={styles.breakdownVal}>₹50.00</Text>
+
+              <View style={styles.billRow}>
+                <Text style={styles.billLabel}>Excise Security Packaging</Text>
+                <Text style={styles.billVal}>₹{excisePackagingFee.toFixed(2)}</Text>
               </View>
-              <View style={styles.breakdownRow}>
-                <Text style={styles.breakdownLabel}>Excise Security Packaging</Text>
-                <Text style={styles.breakdownVal}>₹20.00</Text>
+
+              <View style={styles.billRow}>
+                <Text style={styles.billLabel}>Delivery Partner Fee (10 min)</Text>
+                <Text style={styles.billVal}>₹{deliveryFee.toFixed(2)}</Text>
               </View>
-              <View style={[styles.breakdownRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total Amount</Text>
+
+              <View style={[styles.billRow, styles.totalRow]}>
+                <View>
+                  <Text style={styles.totalLabel}>To Pay</Text>
+                  <Text style={styles.taxSub}>Inclusive of all state excise taxes</Text>
+                </View>
                 <Text style={styles.totalVal}>₹{total.toFixed(2)}</Text>
               </View>
-            </View>
+            </SurfaceCard>
 
             {/* Doorstep Age Check Notice */}
-            <Text style={styles.doorstepNotice}>
-              🛡 Doorstep Age Check: Physical ID and recipient OTP verification enforced by rider.
-            </Text>
+            <View style={styles.noticeBox}>
+              <Text style={styles.noticeText}>
+                🛡 Doorstep Age Check: Physical Government Photo ID and recipient OTP verification enforced by certified rider prior to handover.
+              </Text>
+            </View>
 
-            {/* Pay Button */}
-            <TouchableOpacity
+            {/* Checkout Action */}
+            <AppButton
+              label={isProcessing ? 'Authorizing Razorpay UPI...' : `Pay ₹${total.toFixed(2)} with UPI`}
               onPress={handlePay}
               disabled={isProcessing}
-              style={styles.payButton}
-            >
-              <Text style={styles.payButtonText}>
-                {isProcessing ? 'Authorizing Razorpay...' : `Pay ₹${total.toFixed(2)} via UPI`}
-              </Text>
-            </TouchableOpacity>
+              variant="gradient"
+              style={{ marginTop: 8 }}
+            />
           </>
         )}
       </ScrollView>
@@ -148,199 +220,306 @@ export const CartScreen: React.FC<CartScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.midnight,
-    paddingTop: 54,
+    backgroundColor: colors.background,
+    paddingTop: 50,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    marginBottom: 14,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   title: {
-    color: colors.cream,
     fontSize: 20,
     fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  subTitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeText: {
-    color: colors.creamMuted,
-    fontSize: 18,
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   content: {
-    padding: 18,
+    padding: SPACING.lg,
     paddingBottom: 80,
   },
   emptyBox: {
     alignItems: 'center',
-    marginTop: 80,
+    marginTop: 90,
   },
-  emptyTitle: {
-    color: colors.cream,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  emptySub: {
-    color: colors.creamMuted,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  addressBox: {
-    backgroundColor: colors.cardGlass,
+  emptyCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.cardAlt,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 16,
-  },
-  addressTitle: {
-    color: colors.cream,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  addressDesc: {
-    color: colors.creamMuted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  geofenceBadge: {
-    color: colors.tealNoir,
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  itemRow: {
-    backgroundColor: '#14101F',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 14,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderColor: colors.border,
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  itemName: {
-    color: colors.cream,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  itemPrice: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  qtyControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  qtyBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: '#1E172E',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  qtyBtnText: {
-    color: colors.cream,
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  qtyValue: {
-    color: colors.cream,
-    fontSize: 13,
-    fontWeight: '800',
-    minWidth: 16,
-    textAlign: 'center',
-  },
-  safeRidePromo: {
-    backgroundColor: 'rgba(36, 141, 120, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(36, 141, 120, 0.35)',
-    borderRadius: 16,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginVertical: 14,
-  },
-  safeRideTitle: {
-    color: colors.tealNoir,
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
-  safeRideDesc: {
-    color: colors.creamMuted,
-    fontSize: 10.5,
-    marginTop: 2,
-  },
-  breakdownCard: {
-    backgroundColor: colors.cardGlass,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    padding: 14,
     marginBottom: 14,
   },
-  breakdownRow: {
+  emptyIcon: {
+    fontSize: 26,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  emptySub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 6,
+    textAlign: 'center',
+    maxWidth: 240,
+  },
+  destinationCard: {
+    marginBottom: 12,
+  },
+  destHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  destPin: {
+    fontSize: 16,
+    marginTop: 1,
+  },
+  destTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  destAddress: {
+    fontSize: 11.5,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  verifiedZoneTag: {
+    backgroundColor: 'rgba(5, 150, 105, 0.15)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: RADIUS.xs,
+  },
+  verifiedZoneText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.savings,
+  },
+  geofenceNote: {
+    fontSize: 10.5,
+    color: colors.primary,
+    marginTop: 8,
+    fontWeight: '600',
+  },
+  savingsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+    borderColor: 'rgba(5, 150, 105, 0.3)',
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: 10,
+    gap: 8,
+    marginBottom: 14,
+  },
+  savingsIcon: {
+    fontSize: 14,
+  },
+  savingsText: {
+    fontSize: 12,
+    color: colors.textPrimary,
+  },
+  savingsHighlight: {
+    color: colors.savings,
+    fontWeight: '800',
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textTertiary,
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  itemCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 10,
+  },
+  itemBrand: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  itemName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 1,
+  },
+  itemMeta: {
+    fontSize: 10.5,
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+  itemPrice: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginTop: 4,
+  },
+  qtyControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  qtyBtn: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  qtyValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    paddingHorizontal: 8,
+  },
+  rideCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(101, 201, 156, 0.08)',
+    borderColor: 'rgba(101, 201, 156, 0.25)',
+    marginVertical: 12,
+  },
+  rideLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  rideBadge: {
+    backgroundColor: 'rgba(101, 201, 156, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.xs,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  rideBadgeText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  rideTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  rideSub: {
+    fontSize: 10.5,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  ridePill: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
+  ridePillText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: colors.textInverse,
+  },
+  billCard: {
+    marginBottom: 14,
+  },
+  billHeader: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  billRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 6,
   },
-  breakdownLabel: {
-    color: colors.creamMuted,
+  billLabel: {
     fontSize: 12,
+    color: colors.textSecondary,
   },
-  breakdownVal: {
-    color: colors.cream,
+  billVal: {
     fontSize: 12,
     fontWeight: '600',
+    color: colors.textPrimary,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 8,
-    marginTop: 4,
+    borderTopColor: colors.border,
+    paddingTop: 10,
+    marginTop: 6,
     marginBottom: 0,
   },
   totalLabel: {
-    color: colors.cream,
     fontSize: 14,
     fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  taxSub: {
+    fontSize: 10,
+    color: colors.textTertiary,
   },
   totalVal: {
-    color: colors.gold,
     fontSize: 18,
     fontWeight: '900',
+    color: colors.primary,
   },
-  doorstepNotice: {
-    color: colors.creamMuted,
-    fontSize: 10.5,
-    textAlign: 'center',
-    marginBottom: 16,
+  noticeBox: {
+    backgroundColor: colors.cardAlt,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 14,
+  },
+  noticeText: {
+    fontSize: 10,
+    color: colors.textTertiary,
     lineHeight: 14,
-  },
-  payButton: {
-    backgroundColor: colors.gold,
-    borderRadius: 25,
-    paddingVertical: 15,
-    alignItems: 'center',
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-  },
-  payButtonText: {
-    color: colors.midnight,
-    fontSize: 14,
-    fontWeight: '900',
+    textAlign: 'center',
   },
 });

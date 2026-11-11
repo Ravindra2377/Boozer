@@ -10,36 +10,44 @@
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono-price: 'Space Grotesk', monospace;
 
-  /* Color Palette */
-  --color-midnight: #0C0C0F;
-  --color-plum-deep: #121217;
-  --color-plum-surface: #17171E;
-  --color-card-glass: #17171E;
-  --color-card-border: rgba(255, 255, 255, 0.08);
-  --color-card-border-active: rgba(197, 160, 89, 0.45);
+  /* CompareX Clear Commerce Emerald & Dark Paper Palette */
+  --color-primary: #16845B;
+  --color-primary-light: #4FAF86;
+  --color-primary-dark: #0D4F3C;
+  --color-primary-mint: #65C99C;
 
-  --color-gold: #C5A059;
-  --color-gold-hover: #D4AF37;
-  --color-gold-dark: #9E7B35;
-  --color-gold-glow: rgba(197, 160, 89, 0.15);
+  --color-midnight: #0E1511;
+  --color-plum-deep: #121A15;
+  --color-plum-surface: #17201B;
+  --color-card-glass: rgba(23, 32, 27, 0.85);
+  --color-card-border: #304038;
+  --color-card-border-active: rgba(101, 201, 156, 0.50);
 
-  --color-purple: #23202E;
-  --color-purple-light: #A5A2B8;
+  /* Gold mapped to CompareX Mint/Emerald for cohesive styling */
+  --color-gold: #65C99C;
+  --color-gold-hover: #8AD9B5;
+  --color-gold-dark: #16845B;
+  --color-gold-glow: rgba(101, 201, 156, 0.20);
+
+  --color-purple: #202B25;
+  --color-purple-light: #B4BDB7;
   --color-purple-glow: transparent;
 
-  --color-cream: #EDEDF2;
-  --color-cream-muted: #8E8E9F;
-  --color-cream-subtle: #5A5A6B;
+  --color-cream: #F7F8FA;
+  --color-cream-muted: #B4BDB7;
+  --color-cream-subtle: #77827B;
 
-  --color-teal-noir: #1E8270;
-  --color-crimson: #D64545;
-  --color-crimson-glow: rgba(214, 69, 69, 0.2);
+  --color-teal-noir: #059669;
+  --color-savings: #059669;
+  --color-savings-light: rgba(5, 150, 105, 0.16);
+  --color-crimson: #DC4C3E;
+  --color-crimson-glow: rgba(220, 76, 62, 0.2);
 
-  /* Shadows (Clean & Realistic, No Neon Glow) */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
-  --glow-gold: none;
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.55);
+  --glow-gold: 0 0 18px rgba(101, 201, 156, 0.25);
   --glow-purple: none;
   --glow-crimson: none;
 
@@ -278,14 +286,16 @@ h1, h2, h3, h4, .font-heading {
   pointer-events: auto;
   width: 100%;
   max-width: 420px;
-  background: #17171F;
-  border: 1px solid var(--color-card-border);
+  background: rgba(23, 32, 27, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(101, 201, 156, 0.28);
   border-radius: var(--radius-full);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 20px rgba(101, 201, 156, 0.08);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .nav-tab-item {
@@ -299,9 +309,10 @@ h1, h2, h3, h4, .font-heading {
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all var(--transition-fast);
   min-width: 52px;
-  padding: 4px;
+  padding: 6px 8px;
+  border-radius: var(--radius-full);
 }
 
 .nav-tab-item:hover {
@@ -310,6 +321,8 @@ h1, h2, h3, h4, .font-heading {
 
 .nav-tab-item.active {
   color: var(--color-gold);
+  background: rgba(101, 201, 156, 0.16);
+  border: 1px solid rgba(101, 201, 156, 0.35);
 }
 
 .nav-tab-item.active svg {
@@ -329,27 +342,27 @@ h1, h2, h3, h4, .font-heading {
 
 /* Standard Cards */
 .glass-card {
-  background: #181820;
+  background: var(--color-plum-surface);
   border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 18px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition-normal);
 }
 
 .glass-card:hover {
-  border-color: rgba(197, 160, 89, 0.3);
+  border-color: rgba(101, 201, 156, 0.4);
 }
 
-/* Hero Ride Banner */
+/* Hero Ride Banner (CompareX Signature Emerald Gradient) */
 .hero-ride-banner {
-  background: #181822;
-  border: 1px solid rgba(197, 160, 89, 0.25);
-  border-radius: var(--radius-md);
-  padding: 18px;
+  background: linear-gradient(135deg, #0A2E23 0%, #116149 50%, #16845B 100%);
+  border: 1px solid rgba(101, 201, 156, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 /* Search Bar */
@@ -442,9 +455,9 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .product-card {
-  background: #16161D;
+  background: var(--color-plum-surface);
   border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -453,21 +466,22 @@ h1, h2, h3, h4, .font-heading {
   cursor: pointer;
   transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
+  box-shadow: var(--shadow-sm);
 }
 
 .product-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(197, 160, 89, 0.4);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  border-color: rgba(101, 201, 156, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 16px rgba(101, 201, 156, 0.12);
 }
 
 .product-img-wrap {
   width: 100%;
   height: 140px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
-  background: #111116;
+  background: #121A15;
 }
 
 .product-img-wrap img {
@@ -478,30 +492,32 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .product-card:hover .product-img-wrap img {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 /* Add Button in Product Card */
 .add-btn-circle {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background: #22222E;
-  color: var(--color-cream);
-  border: 1px solid var(--color-card-border);
+  min-width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: rgba(101, 201, 156, 0.14);
+  color: var(--color-primary-mint);
+  border: 1px solid rgba(101, 201, 156, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.85rem;
+  padding: 0 8px;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .add-btn-circle:hover {
   background: var(--color-gold);
-  color: var(--color-midnight);
+  color: #0E1511;
   border-color: var(--color-gold);
+  transform: scale(1.05);
 }
 
 /* Route Map Styling */
