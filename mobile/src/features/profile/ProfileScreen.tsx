@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { useSessionStore } from '../../store/useSessionStore';
+import { AuthModal } from '../auth/AuthModal';
 
 export const ProfileScreen: React.FC = () => {
   const { user } = useSessionStore();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const pastOrders = [
     {
@@ -48,6 +50,24 @@ export const ProfileScreen: React.FC = () => {
             Age {user.calculatedAge} Years · Born 1997
           </Text>
         </View>
+
+        <TouchableOpacity
+          onPress={() => setIsAuthModalOpen(true)}
+          style={{
+            backgroundColor: 'rgba(101, 201, 156, 0.14)',
+            borderWidth: 1,
+            borderColor: 'rgba(101, 201, 156, 0.4)',
+            borderRadius: 20,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            alignSelf: 'center',
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>
+            Switch Account
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* DigiLocker KYC Verified Badge */}
@@ -115,6 +135,12 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
       ))}
+
+      {/* CompareX Styled AuthModal */}
+      <AuthModal
+        visible={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </ScrollView>
   );
 };

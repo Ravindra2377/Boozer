@@ -21,6 +21,7 @@ interface SessionState {
   login: (phone: string, token: string) => Promise<void>;
   logout: () => Promise<void>;
   updateKycStatus: (status: 'PENDING' | 'VERIFIED' | 'REJECTED') => void;
+  setUser: (updatedUser: Partial<UserProfile>) => void;
   loadStoredSession: () => Promise<void>;
 }
 
@@ -62,6 +63,9 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   updateKycStatus: (status) =>
     set((state) => ({ user: { ...state.user, kycStatus: status } })),
+
+  setUser: (updatedUser) =>
+    set((state) => ({ user: { ...state.user, ...updatedUser }, isAuthenticated: true })),
 
   loadStoredSession: async () => {
     try {
