@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import BoozerNeonLogo from '../BoozerNeonLogo';
 import {
   X,
   Smartphone,
@@ -24,6 +25,7 @@ import {
   MapPin,
   FileText,
   Building2,
+  Bike,
 } from 'lucide-react';
 import { api } from '../../api/client';
 import { INITIAL_USER } from '../../data/mockData';
@@ -75,7 +77,6 @@ export function AuthModal({
   const [infoMessage, setInfoMessage] = useState('');
   const [resendTimer, setResendTimer] = useState(45);
   const [confirmationResult, setConfirmationResult] = useState(null);
-  const isFirebaseEnabled = isFirebaseConfigured();
 
   useEffect(() => {
     setMode(initialMode);
@@ -406,29 +407,13 @@ export function AuthModal({
 
           <div
             style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '2.4rem',
-              fontWeight: 900,
-              color: 'var(--color-cream)',
-              letterSpacing: '-0.03em',
-              lineHeight: 1.1,
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              marginTop: '4px',
+              marginBottom: '4px',
             }}
           >
-            <span>Boozer</span>
-            <span
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: 'var(--color-primary-mint)',
-                boxShadow: '0 0 12px var(--color-primary-mint)',
-                display: 'inline-block',
-                marginLeft: '2px',
-              }}
-            />
+            <BoozerNeonLogo variant="neon" height={50} />
           </div>
 
           <p
@@ -442,50 +427,12 @@ export function AuthModal({
             {mode === 'signup'
               ? accountType === 'retailer'
                 ? 'Onboard your licensed A4 liquor establishment into Boozer’s 10-minute hyperlocal dispatch grid.'
+                : accountType === 'rider'
+                ? 'Join Boozer’s express courier fleet. Instant dispatch batches, weekly payouts, and ₹85/drop.'
                 : 'Join Boozer for verified doorstep delivery & ₹150 Safe Ride Home credits on Uber/Ola.'
               : 'Sign in to access your orders, saved addresses, and express 10-minute dispatch.'}
           </p>
 
-          {/* Firebase Phone Auth vs Sandbox Indicator Badge */}
-          <div style={{ marginTop: '10px' }}>
-            {isFirebaseEnabled ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  color: '#FBBF24',
-                  padding: '3px 9px',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                <span>🔥 Google Firebase Phone Auth Active (10,000 Free SMS/mo)</span>
-              </span>
-            ) : (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  background: 'rgba(101, 201, 156, 0.1)',
-                  border: '1px solid rgba(101, 201, 156, 0.25)',
-                  color: 'var(--color-primary-mint)',
-                  padding: '3px 9px',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                <span>⚡ Free Sandbox OTP Mode (Code: 123456 · Firebase Ready)</span>
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Invisible reCAPTCHA container for Google Firebase Phone Auth */}
@@ -1018,7 +965,7 @@ export function AuthModal({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
                       gap: '8px',
                       background: 'rgba(0, 0, 0, 0.35)',
                       padding: '5px',
@@ -1051,7 +998,7 @@ export function AuthModal({
                         <span>Customer</span>
                       </div>
                       <span style={{ fontSize: '0.66rem', color: accountType === 'customer' ? 'var(--color-cream)' : 'rgba(255,255,255,0.4)' }}>
-                        Personal Delivery & ₹150 Voucher
+                        Doorstep Delivery
                       </span>
                     </button>
 
@@ -1077,10 +1024,39 @@ export function AuthModal({
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.84rem' }}>
                         <Store size={15} />
-                        <span>Licensed Retailer</span>
+                        <span>A4 Retailer</span>
                       </div>
                       <span style={{ fontSize: '0.66rem', color: accountType === 'retailer' ? 'var(--color-cream)' : 'rgba(255,255,255,0.4)' }}>
-                        Excise A4 Outlets & Dispatch Grid
+                        Licensed Depots
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountType('rider');
+                        setErrorMessage('');
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: accountType === 'rider' ? '1.5px solid var(--color-gold)' : '1px solid transparent',
+                        background: accountType === 'rider' ? 'rgba(231, 161, 61, 0.14)' : 'transparent',
+                        color: accountType === 'rider' ? 'var(--color-gold)' : 'var(--color-cream-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '3px',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.84rem' }}>
+                        <Bike size={15} />
+                        <span>Courier Pilot</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: accountType === 'rider' ? 'var(--color-cream)' : 'rgba(255,255,255,0.4)' }}>
+                        Fleet & ₹85/Drop
                       </span>
                     </button>
                   </div>
@@ -1900,6 +1876,95 @@ export function AuthModal({
                       <span>{isLoading ? 'Verifying Credentials...' : 'Register Licensed Outlet & Open Terminal →'}</span>
                     </button>
                   </form>
+                )}
+
+                {/* ─── OPTION C: COURIER PILOT REGISTRATION ─── */}
+                {accountType === 'rider' && (
+                  <div
+                    style={{
+                      background: 'rgba(231, 161, 61, 0.08)',
+                      border: '1.5px solid rgba(231, 161, 61, 0.3)',
+                      borderRadius: '16px',
+                      padding: '22px 18px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        background: 'rgba(231, 161, 61, 0.15)',
+                        border: '2px solid var(--color-gold)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--color-gold)',
+                        margin: '0 auto 14px',
+                      }}
+                    >
+                      <Bike size={28} />
+                    </div>
+
+                    <h3 style={{ fontSize: '1.18rem', fontWeight: 900, color: '#fff', marginBottom: '6px' }}>
+                      Boozer Courier & Delivery Pilot Onboarding
+                    </h3>
+
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-cream-muted)', maxWidth: '380px', margin: '0 auto 16px', lineHeight: 1.45 }}>
+                      Earn ₹85/delivery with guaranteed payouts, 100% customer tips, and statutory excise verification benefits. Requires 21+ age and valid driving licence.
+                    </p>
+
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      maxWidth: '340px',
+                      margin: '0 auto 20px',
+                      textAlign: 'left',
+                      fontSize: '0.74rem',
+                      color: 'var(--color-cream-subtle)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle2 size={14} color="var(--color-gold)" />
+                        <span>Instant 10-Minute Dispatch Hub Assignment</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle2 size={14} color="var(--color-gold)" />
+                        <span>Live GPS Telematics & Doorstep OTP Terminal</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle2 size={14} color="var(--color-gold)" />
+                        <span>Daily EV Battery Swapping & Transit Insurance</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSwitchView) onSwitchView('rider');
+                        onClose();
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '13px',
+                        borderRadius: 'var(--radius-full)',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #F5B24E 0%, #E7A13D 100%)',
+                        color: '#0E1511',
+                        fontSize: '0.92rem',
+                        fontWeight: 900,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--glow-gold)',
+                      }}
+                    >
+                      <Bike size={18} />
+                      <span>Open Pilot Onboarding Terminal →</span>
+                    </button>
+                  </div>
                 )}
               </div>
             )}

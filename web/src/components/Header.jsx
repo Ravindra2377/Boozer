@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BoozerNeonLogo from './BoozerNeonLogo';
 import {
   ShieldCheck, Smartphone, Store, ShieldAlert, Clock, ShoppingBag, Eye, LogOut, LogIn, MapPin, ChevronDown, Check, X, Bike
 } from 'lucide-react';
@@ -38,44 +39,11 @@ export function Header({
       }}>
         {/* Signature BOOZER Brand Badge with CompareX Editorial Touch */}
         <div className="brand-badge">
-          <div className="boozer-logo-text" style={{ cursor: 'pointer' }} onClick={() => setActiveView('customer')}>
-            <span style={{ color: 'var(--color-primary-mint)' }}>B</span>
-            <span className="glass-logo-icon">
-              <svg viewBox="0 0 40 46">
-                <path
-                  d="M6 4 L34 4 L31 40 C31 42 29 44 27 44 L13 44 C11 44 9 42 9 40 Z"
-                  fill="none"
-                  stroke="var(--color-primary-mint)"
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M8.5 18 L31.5 18 L29.5 39 C29.5 41 28 42 26 42 L14 42 C12 42 10.5 41 10.5 39 Z"
-                  fill="var(--color-primary-mint)"
-                />
-                <rect x="14" y="24" width="10" height="10" rx="1.5" fill="rgba(255,255,255,0.4)" />
-              </svg>
-            </span>
-            <span style={{ color: '#F7F8FA' }}>ZER</span>
-          </div>
-
-          {/* 10 MIN Speed Pill */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'rgba(101, 201, 156, 0.14)',
-            border: '1px solid rgba(101, 201, 156, 0.35)',
-            borderRadius: 'var(--radius-full)',
-            padding: '2px 8px',
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            color: 'var(--color-primary-mint)',
-            letterSpacing: '0.04em',
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-primary-mint)' }}></span>
-            <span>10 MIN</span>
-          </div>
+          <button type="button" onClick={() => setActiveView('customer')} aria-label="BOOZER home"
+            style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <span className="logo-full"><BoozerNeonLogo variant="neon" height={46} /></span>
+            <span className="logo-mark"><BoozerNeonLogo variant="mark" height={40} /></span>
+          </button>
 
           {/* Location Selector Pill */}
           <button

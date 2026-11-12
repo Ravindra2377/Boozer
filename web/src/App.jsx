@@ -43,6 +43,8 @@ export function App() {
       setActiveView('retailer');
     } else if (authenticatedUser.role === 'ADMIN') {
       setActiveView('admin');
+    } else if (authenticatedUser.role === 'RIDER') {
+      setActiveView('rider');
     }
   };
 

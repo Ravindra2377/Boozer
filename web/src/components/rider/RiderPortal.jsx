@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Bike, Navigation, MapPin, ShieldCheck, CheckCircle2, AlertTriangle,
-  Play, Pause, RotateCcw, Radio, Phone, User, KeyRound, Clock
+  Play, Pause, RotateCcw, Radio, Phone, User, KeyRound, Clock, LogOut
 } from 'lucide-react';
+import { RiderAuthScreen } from './RiderAuthScreen';
 import { api } from '../../api/client';
 import { DeliveryMap } from '../map/DeliveryMap';
 import { getMapDataForCity } from '../../data/mapCoordinates';
@@ -25,8 +26,27 @@ export function RiderPortal({ city = "Hyderabad" }) {
 
   const [activeOrderId, setActiveOrderId] = useState("BZ-20261105-4819");
   const [orderStatus, setOrderStatus] = useState("DISPATCHED"); // 'DISPATCHED', 'ARRIVED', 'DELIVERED'
-  const [courierName] = useState("Rohit Kumar");
-  const [courierVehicle] = useState("KA 01 AB 1234 (Hero Electric)");
+  const [riderUser, setRiderUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('boozer_rider');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const courierName = riderUser?.name || "Rohit Kumar";
+  const courierVehicle = riderUser?.vehicleNumber || "KA 01 AB 1234 (Hero Electric)";
+
+  const handleRiderSignOut = () => {
+    try {
+      localStorage.removeItem('boozer_rider');
+      localStorage.removeItem('boozer_rider_session');
+    } catch (err) {
+      console.warn(err);
+    }
+    setRiderUser(null);
+  };
 
   // Live GPS Transmission State
   const [isBroadcastingGps, setIsBroadcastingGps] = useState(false);
@@ -169,6 +189,16 @@ export function RiderPortal({ city = "Hyderabad" }) {
     setOtpError('');
   };
 
+  if (!riderUser) {
+    return (
+      <RiderAuthScreen
+        onAuthSuccess={(session) => {
+          setRiderUser(session.rider);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="main-content-viewport" style={{ maxWidth: '1100px', margin: '0 auto', width: '100%', padding: '20px' }}>
       {/* Top Banner */}
@@ -240,6 +270,28 @@ export function RiderPortal({ city = "Hyderabad" }) {
               {lastPingTimestamp || 'Standby'}
             </strong>
           </div>
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }} />
+          <button
+            onClick={handleRiderSignOut}
+            title="Sign out of courier terminal"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(239, 68, 68, 0.14)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              borderRadius: 'var(--radius-full)',
+              color: '#FCA5A5',
+              padding: '6px 12px',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <LogOut size={13} />
+            <span>Switch Pilot</span>
+          </button>
         </div>
       </div>
 

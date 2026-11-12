@@ -119,7 +119,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </View>
               <View style={styles.logoRow}>
                 <Text style={styles.brandTitle}>Boozer</Text>
-                <View style={styles.dot} />
               </View>
               <Text style={styles.tagline}>
                 Compare prices across licensed stores, discover craft spirits, and get express doorstep delivery.
@@ -310,13 +309,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: colors.textPrimary,
     letterSpacing: -0.8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primaryMint,
-    marginTop: 8,
   },
   tagline: {
     fontSize: 13,

@@ -1122,3 +1122,9 @@ h1, h2, h3, h4, .font-heading {
   color: var(--color-cream);
 }
 
+/* BOOZER logo: full wordmark on wide screens, B mark on phones */
+.logo-mark { display: none; }
+.logo-full { display: block; }
+@media (max-width: 640px) { .logo-full { display: none; } .logo-mark { display: block; } }
+
+

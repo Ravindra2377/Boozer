@@ -51,10 +51,6 @@ export const BrandHeader: React.FC<BrandHeaderProps> = ({
         <View style={styles.leftCol}>
           <View style={styles.brandRow}>
             <Text style={styles.brandTitle}>Boozer</Text>
-            <View style={styles.speedPill}>
-              <Text style={styles.speedDot}>●</Text>
-              <Text style={styles.speedText}>10 MIN</Text>
-            </View>
           </View>
 
           <TouchableOpacity
@@ -125,27 +121,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: colors.textPrimary,
     letterSpacing: -0.5,
-  },
-  speedPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(101, 201, 156, 0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: 'rgba(101, 201, 156, 0.3)',
-    gap: 4,
-  },
-  speedDot: {
-    fontSize: 8,
-    color: colors.primary,
-  },
-  speedText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primary,
-    letterSpacing: 0.5,
   },
   locationSelector: {
     flexDirection: 'row',
