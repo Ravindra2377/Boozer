@@ -99,7 +99,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <View>
             <Text style={styles.walletLabel}>SAFE RIDE WALLET</Text>
-            <Text style={styles.walletAmount}>₹{user.activeRideCredit.toFixed(2)}</Text>
+            <Text style={styles.walletAmount}>₹{(user.activeRideCredit ?? 150.0).toFixed(2)}</Text>
           </View>
         </View>
         <View style={styles.activeVoucherPill}>

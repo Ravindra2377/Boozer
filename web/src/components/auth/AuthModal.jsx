@@ -21,9 +21,18 @@ import {
   Wine,
   Clock,
   Zap,
+  MapPin,
+  FileText,
+  Building2,
 } from 'lucide-react';
 import { api } from '../../api/client';
 import { INITIAL_USER } from '../../data/mockData';
+import {
+  isFirebaseConfigured,
+  setupRecaptcha,
+  sendFirebasePhoneOtp,
+  verifyFirebasePhoneOtp,
+} from '../../services/firebase';
 
 export function AuthModal({
   isOpen,
@@ -41,22 +50,38 @@ export function AuthModal({
   const [confirmPassword, setConfirmPassword] = useState('Boozer@2026');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Sign up details
+  // Account Type Switcher for Registration: 'customer' | 'retailer'
+  const [accountType, setAccountType] = useState('customer');
+
+  // Customer Sign up details
   const [fullName, setFullName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [dob, setDob] = useState('1998-04-15');
   const [ageConfirmed, setAgeConfirmed] = useState(true);
 
+  // Retailer Sign up details
+  const [storeName, setStoreName] = useState('Jubilee Hills Reserve Spirits');
+  const [licenseeName, setLicenseeName] = useState('Vikram Malhotra');
+  const [licenseNumber, setLicenseNumber] = useState('TS/EXCISE/HYD/2026/0481');
+  const [gstin, setGstin] = useState('36AAACB1234D1Z5');
+  const [storeAddress, setStoreAddress] = useState('Road No. 36, Jubilee Hills, Hyderabad - 500033');
+  const [retailerPhone, setRetailerPhone] = useState('98490 89124');
+  const [retailerDeclared, setRetailerDeclared] = useState(true);
+
   // Flow states
   const [step, setStep] = useState('input'); // 'input' | 'otp' | 'success'
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [resendTimer, setResendTimer] = useState(45);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const isFirebaseEnabled = isFirebaseConfigured();
 
   useEffect(() => {
     setMode(initialMode);
     setStep('input');
     setErrorMessage('');
+    setInfoMessage('');
   }, [initialMode, isOpen]);
 
   // Resend countdown timer
@@ -116,21 +141,46 @@ export function AuthModal({
     }
   };
 
-  // 1. Send OTP
+  // 1. Send OTP (Google Firebase Phone Auth + Sandbox Fallback)
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
     setErrorMessage('');
     setIsLoading(true);
 
     try {
-      const targetPhone = mode === 'signup' ? signupPhone : phone;
+      const targetPhone = mode === 'signup'
+        ? (accountType === 'retailer' ? retailerPhone : signupPhone)
+        : phone;
       if (!targetPhone || targetPhone.replace(/\D/g, '').length < 10) {
         setErrorMessage('Please enter a valid 10-digit mobile number');
         setIsLoading(false);
         return;
       }
 
-      await api.requestOtp(`+91${targetPhone.replace(/\D/g, '')}`);
+      const normalizedPhone = `+91${targetPhone.replace(/\D/g, '').slice(-10)}`;
+
+      if (isFirebaseConfigured()) {
+        try {
+          const res = await sendFirebasePhoneOtp(normalizedPhone);
+          setConfirmationResult(res.confirmationResult);
+          setStep('otp');
+          setResendTimer(45);
+          return;
+        } catch (firebaseErr) {
+          console.warn('[BOOZER FIREBASE] Firebase delivery notice:', firebaseErr);
+          // If billing is not enabled on Firebase Spark tier, automatically fall back to sandbox test OTP
+          setConfirmationResult(null);
+          await api.requestOtp(normalizedPhone);
+          setStep('otp');
+          setResendTimer(45);
+          setErrorMessage('');
+          setInfoMessage('Spark Plan notice: Test OTP 123456 is auto-filled below. (To send cellular SMS, add your number under "Phone numbers for testing" in Firebase Console).');
+          return;
+        }
+      }
+
+      // Default sandbox/local fallback
+      await api.requestOtp(normalizedPhone);
       setStep('otp');
       setResendTimer(45);
     } catch (err) {
@@ -154,15 +204,52 @@ export function AuthModal({
     }
 
     try {
-      const targetPhone = mode === 'signup' ? signupPhone : phone;
-      const res = await api.verifyOtp(`+91${targetPhone.replace(/\D/g, '')}`, enteredOtp);
+      const targetPhone = mode === 'signup'
+        ? (accountType === 'retailer' ? retailerPhone : signupPhone)
+        : phone;
+      let authenticatedPhone = `+91 ${targetPhone.replace(/\D/g, '').slice(-10)}`;
+      let authenticatedUid = null;
+
+      if (confirmationResult) {
+        const verifyRes = await verifyFirebasePhoneOtp(confirmationResult, enteredOtp);
+        authenticatedUid = verifyRes.user?.uid;
+        if (verifyRes.user?.phoneNumber) {
+          authenticatedPhone = verifyRes.user.phoneNumber;
+        }
+      } else {
+        await api.verifyOtp(authenticatedPhone, enteredOtp);
+      }
+
+      if (mode === 'signup' && accountType === 'retailer') {
+        const authenticatedRetailer = {
+          id: authenticatedUid || `ret-${Date.now()}`,
+          name: licenseeName || 'Vikram Malhotra',
+          fullName: licenseeName || 'Vikram Malhotra',
+          storeName: storeName || 'Jubilee Hills Reserve Spirits',
+          licenseNumber: licenseNumber || 'TS/EXCISE/HYD/2026/0481',
+          gstin: gstin || '36AAACB1234D1Z5',
+          storeAddress: storeAddress || 'Road No. 36, Jubilee Hills, Hyderabad - 500033',
+          phone: authenticatedPhone,
+          kycStatus: 'VERIFIED',
+          role: 'RETAILER',
+          calculatedAge: 38,
+        };
+
+        setStep('success');
+        setTimeout(() => {
+          if (onSwitchView) onSwitchView('retailer');
+          if (onAuthSuccess) onAuthSuccess(authenticatedRetailer);
+          onClose();
+        }, 850);
+        return;
+      }
 
       const authenticatedUser = {
-        id: res?.user?.id || (mode === 'signup' ? `usr-${Date.now()}` : INITIAL_USER.id),
-        name: mode === 'signup' ? (fullName || 'New Boozer Member') : (res?.user?.fullName || INITIAL_USER.name),
-        fullName: mode === 'signup' ? (fullName || 'New Boozer Member') : (res?.user?.fullName || INITIAL_USER.fullName),
-        phone: `+91 ${targetPhone.replace(/\D/g, '')}`,
-        kycStatus: mode === 'signup' ? 'PENDING' : (res?.user?.kycStatus || 'VERIFIED'),
+        id: authenticatedUid || (mode === 'signup' ? `usr-${Date.now()}` : INITIAL_USER.id),
+        name: mode === 'signup' ? (fullName || 'New Boozer Member') : INITIAL_USER.name,
+        fullName: mode === 'signup' ? (fullName || 'New Boozer Member') : INITIAL_USER.fullName,
+        phone: authenticatedPhone,
+        kycStatus: mode === 'signup' ? 'PENDING' : 'VERIFIED',
         documentType: 'DIGILOCKER_DL',
         maskedDocNumber: 'TS-092015XXXX4819',
         calculatedAge: mode === 'signup' ? calculatedAge : 28,
@@ -173,6 +260,7 @@ export function AuthModal({
 
       setStep('success');
       setTimeout(() => {
+        if (onSwitchView) onSwitchView('customer');
         if (onAuthSuccess) onAuthSuccess(authenticatedUser);
         onClose();
       }, 850);
@@ -247,14 +335,15 @@ export function AuthModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '520px',
+          maxWidth: '540px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           background: 'linear-gradient(165deg, rgba(23, 32, 27, 0.98) 0%, rgba(14, 21, 17, 0.99) 100%)',
           border: '1px solid rgba(101, 201, 156, 0.22)',
           borderRadius: '24px',
           boxShadow: '0 32px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(22, 132, 91, 0.2)',
-          padding: '32px 30px',
+          padding: '30px 28px',
           position: 'relative',
-          overflow: 'hidden',
         }}
       >
         {/* Subtle Ambient Radial Glow */}
@@ -351,10 +440,56 @@ export function AuthModal({
             }}
           >
             {mode === 'signup'
-              ? 'Join Boozer for verified doorstep delivery & ₹150 Safe Ride Home credits on Uber/Ola.'
+              ? accountType === 'retailer'
+                ? 'Onboard your licensed A4 liquor establishment into Boozer’s 10-minute hyperlocal dispatch grid.'
+                : 'Join Boozer for verified doorstep delivery & ₹150 Safe Ride Home credits on Uber/Ola.'
               : 'Sign in to access your orders, saved addresses, and express 10-minute dispatch.'}
           </p>
+
+          {/* Firebase Phone Auth vs Sandbox Indicator Badge */}
+          <div style={{ marginTop: '10px' }}>
+            {isFirebaseEnabled ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  color: '#FBBF24',
+                  padding: '3px 9px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <span>🔥 Google Firebase Phone Auth Active (10,000 Free SMS/mo)</span>
+              </span>
+            ) : (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: 'rgba(101, 201, 156, 0.1)',
+                  border: '1px solid rgba(101, 201, 156, 0.25)',
+                  color: 'var(--color-primary-mint)',
+                  padding: '3px 9px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <span>⚡ Free Sandbox OTP Mode (Code: 123456 · Firebase Ready)</span>
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Invisible reCAPTCHA container for Google Firebase Phone Auth */}
+        <div id="recaptcha-container"></div>
 
         {/* Sliding Pill Tab Switcher (CompareX Signature Style) */}
         <div
@@ -425,6 +560,28 @@ export function AuthModal({
           </button>
         </div>
 
+        {/* Info / Notice Banner */}
+        {infoMessage && (
+          <div
+            style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '10px 14px',
+              color: '#FBBF24',
+              fontSize: '0.8rem',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              lineHeight: 1.4,
+            }}
+          >
+            <Sparkles size={16} color="#FBBF24" style={{ flexShrink: 0 }} />
+            <span>{infoMessage}</span>
+          </div>
+        )}
+
         {/* Error Banner */}
         {errorMessage && (
           <div
@@ -467,10 +624,16 @@ export function AuthModal({
               <CheckCircle2 size={38} />
             </div>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-cream)' }}>
-              {mode === 'signup' ? 'Account Created & Verified!' : 'Welcome back to Boozer!'}
+              {mode === 'signup'
+                ? accountType === 'retailer'
+                  ? 'Licensed Outlet Registered & Verified!'
+                  : 'Account Created & Verified!'
+                : 'Welcome back to Boozer!'}
             </h3>
             <p style={{ fontSize: '0.86rem', color: 'var(--color-cream-muted)', marginTop: '8px' }}>
-              Redirecting you to the premium catalog...
+              {mode === 'signup' && accountType === 'retailer'
+                ? `Opening Retailer Dispatch Terminal for ${storeName || 'your outlet'}...`
+                : 'Redirecting you to the premium catalog...'}
             </p>
           </div>
         )}
@@ -498,7 +661,7 @@ export function AuthModal({
                 Enter 6-Digit Code
               </h4>
               <p style={{ fontSize: '0.82rem', color: 'var(--color-cream-muted)', marginTop: '4px' }}>
-                Dispatched to <strong style={{ color: 'var(--color-primary-mint)' }}>+91 {mode === 'signup' ? signupPhone : phone}</strong>
+                Dispatched to <strong style={{ color: 'var(--color-primary-mint)' }}>+91 {mode === 'signup' ? (accountType === 'retailer' ? retailerPhone : signupPhone) : phone}</strong>
               </p>
             </div>
 
@@ -821,363 +984,924 @@ export function AuthModal({
               </div>
             )}
 
-            {/* ─── SIGN UP (CREATE ACCOUNT) FORM ─── */}
+            {/* ─── SIGN UP (CREATE ACCOUNT) FLOW WITH DUAL CUSTOMER / RETAILER SWITCH ─── */}
             {mode === 'signup' && (
-              <form onSubmit={handleSendOtp}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                  {/* Full Name */}
-                  <div>
-                    <label
+              <div>
+                {/* Account Type Selector Pill (Customer vs Licensed Retailer) */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span
                       style={{
-                        display: 'block',
                         fontSize: '0.72rem',
                         fontWeight: 800,
                         color: 'var(--color-cream-muted)',
-                        marginBottom: '4px',
                         textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
                       }}
                     >
-                      Full Legal Name
-                    </label>
-                    <div
+                      Registration Category
+                    </span>
+                    <span
                       style={{
+                        fontSize: '0.7rem',
+                        color: accountType === 'retailer' ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)',
+                        fontWeight: 800,
                         display: 'flex',
                         alignItems: 'center',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid var(--color-card-border)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0 10px',
+                        gap: '4px',
                       }}
                     >
-                      <User size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Kabir Varma"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '10px 0',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-cream)',
-                          fontSize: '0.86rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
+                      {accountType === 'retailer' ? '🏪 Licensed A4 Outlet' : '👤 Personal Consumer'}
+                    </span>
                   </div>
 
-                  {/* Phone */}
-                  <div>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        color: 'var(--color-cream-muted)',
-                        marginBottom: '4px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Mobile Phone
-                    </label>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid var(--color-card-border)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0 10px',
-                      }}
-                    >
-                      <Smartphone size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
-                      <input
-                        type="tel"
-                        value={signupPhone}
-                        onChange={(e) => setSignupPhone(e.target.value)}
-                        placeholder="98765 43210"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '10px 0',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-cream)',
-                          fontSize: '0.86rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-                  <div>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        color: 'var(--color-cream-muted)',
-                        marginBottom: '4px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Password
-                    </label>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid var(--color-card-border)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0 10px',
-                      }}
-                    >
-                      <Lock size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '10px 0',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-cream)',
-                          fontSize: '0.86rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        color: 'var(--color-cream-muted)',
-                        marginBottom: '4px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Confirm Password
-                    </label>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: pwdMatches ? '1px solid var(--color-primary-mint)' : '1px solid var(--color-card-border)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0 10px',
-                      }}
-                    >
-                      <ShieldCheck size={14} color={pwdMatches ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)'} style={{ marginRight: '6px' }} />
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '10px 0',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-cream)',
-                          fontSize: '0.86rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* CompareX Password Strength Checklist */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '4px 10px',
-                    background: 'rgba(0, 0, 0, 0.25)',
-                    borderRadius: 'var(--radius-xs)',
-                    padding: '8px 10px',
-                    marginBottom: '12px',
-                    fontSize: '0.68rem',
-                  }}
-                >
-                  <span style={{ color: pwdLengthValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {pwdLengthValid ? '✓' : '○'} 8-16 characters
-                  </span>
-                  <span style={{ color: pwdUpperValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {pwdUpperValid ? '✓' : '○'} 1 Uppercase (A-Z)
-                  </span>
-                  <span style={{ color: pwdNumValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {pwdNumValid ? '✓' : '○'} 1 Number (0-9)
-                  </span>
-                  <span style={{ color: pwdSpecialValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {pwdSpecialValid ? '✓' : '○'} 1 Special symbol
-                  </span>
-                </div>
-
-                {/* Date of Birth & Legal Age Indicator */}
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        color: 'var(--color-cream-muted)',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Date of Birth (Statutory 21+ Age Check)
-                    </label>
-                    {isLegalAge ? (
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          color: 'var(--color-primary-mint)',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                        }}
-                      >
-                        <ShieldCheck size={12} />
-                        <span>Age: {calculatedAge} Yrs (Legal)</span>
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          color: 'var(--color-crimson)',
-                          fontWeight: 700,
-                        }}
-                      >
-                        Age: {calculatedAge} Yrs (Must be 21+)
-                      </span>
-                    )}
-                  </div>
                   <div
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: isLegalAge ? '1px solid var(--color-card-border)' : '1px solid var(--color-crimson)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '0 10px',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '8px',
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      padding: '5px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-card-border)',
                     }}
                   >
-                    <Calendar size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
-                    <input
-                      type="date"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      required
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountType('customer');
+                        setErrorMessage('');
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: accountType === 'customer' ? '1.5px solid var(--color-primary-mint)' : '1px solid transparent',
+                        background: accountType === 'customer' ? 'rgba(101, 201, 156, 0.14)' : 'transparent',
+                        color: accountType === 'customer' ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '3px',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.84rem' }}>
+                        <User size={15} />
+                        <span>Customer</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: accountType === 'customer' ? 'var(--color-cream)' : 'rgba(255,255,255,0.4)' }}>
+                        Personal Delivery & ₹150 Voucher
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountType('retailer');
+                        setErrorMessage('');
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: accountType === 'retailer' ? '1.5px solid var(--color-primary-mint)' : '1px solid transparent',
+                        background: accountType === 'retailer' ? 'rgba(101, 201, 156, 0.14)' : 'transparent',
+                        color: accountType === 'retailer' ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '3px',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.84rem' }}>
+                        <Store size={15} />
+                        <span>Licensed Retailer</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: accountType === 'retailer' ? 'var(--color-cream)' : 'rgba(255,255,255,0.4)' }}>
+                        Excise A4 Outlets & Dispatch Grid
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* ─── OPTION A: CUSTOMER REGISTRATION FORM ─── */}
+                {accountType === 'customer' && (
+                  <form onSubmit={handleSendOtp}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                      {/* Full Name */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Full Legal Name
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <User size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Kabir Varma"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '10px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Mobile Phone
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <Smartphone size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="tel"
+                            value={signupPhone}
+                            onChange={(e) => setSignupPhone(e.target.value)}
+                            placeholder="98765 43210"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '10px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Password Fields */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Password
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <Lock size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '10px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Confirm Password
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: pwdMatches ? '1px solid var(--color-primary-mint)' : '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <ShieldCheck size={14} color={pwdMatches ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)'} style={{ marginRight: '6px' }} />
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '10px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CompareX Password Strength Checklist */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '4px 10px',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        borderRadius: 'var(--radius-xs)',
+                        padding: '8px 10px',
+                        marginBottom: '12px',
+                        fontSize: '0.68rem',
+                      }}
+                    >
+                      <span style={{ color: pwdLengthValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdLengthValid ? '✓' : '○'} 8-16 characters
+                      </span>
+                      <span style={{ color: pwdUpperValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdUpperValid ? '✓' : '○'} 1 Uppercase (A-Z)
+                      </span>
+                      <span style={{ color: pwdNumValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdNumValid ? '✓' : '○'} 1 Number (0-9)
+                      </span>
+                      <span style={{ color: pwdSpecialValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdSpecialValid ? '✓' : '○'} 1 Special symbol
+                      </span>
+                    </div>
+
+                    {/* Date of Birth & Legal Age Indicator */}
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Date of Birth (Statutory 21+ Age Check)
+                        </label>
+                        {isLegalAge ? (
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              color: 'var(--color-primary-mint)',
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                          >
+                            <ShieldCheck size={12} />
+                            <span>Age: {calculatedAge} Yrs (Legal)</span>
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              color: 'var(--color-crimson)',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Age: {calculatedAge} Yrs (Must be 21+)
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: isLegalAge ? '1px solid var(--color-card-border)' : '1px solid var(--color-crimson)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0 10px',
+                        }}
+                      >
+                        <Calendar size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                        <input
+                          type="date"
+                          value={dob}
+                          onChange={(e) => setDob(e.target.value)}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '8px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--color-cream)',
+                            fontSize: '0.86rem',
+                            outline: 'none',
+                            colorScheme: 'dark',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Safe Ride Voucher Applied */}
+                    <div
+                      style={{
+                        background: 'rgba(101, 201, 156, 0.08)',
+                        border: '1px solid rgba(101, 201, 156, 0.28)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '8px 12px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <Car size={18} color="var(--color-primary-mint)" />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-primary-mint)' }}>
+                          ₹150 Safe Ride Home Voucher Applied
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--color-cream-muted)' }}>
+                          Redeemable on Uber, Ola, or Rapido after ordering
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          background: 'var(--color-primary-mint)',
+                          color: '#0E1511',
+                          fontWeight: 900,
+                          fontSize: '0.66rem',
+                          padding: '3px 7px',
+                          borderRadius: 'var(--radius-xs)',
+                        }}
+                      >
+                        SAFERIDE150
+                      </span>
+                    </div>
+
+                    {/* Statutory Checkbox */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px' }}>
+                      <input
+                        type="checkbox"
+                        id="ageCheck"
+                        checked={ageConfirmed}
+                        onChange={(e) => setAgeConfirmed(e.target.checked)}
+                        required
+                        style={{ marginTop: '3px', accentColor: 'var(--color-primary-mint)' }}
+                      />
+                      <label htmlFor="ageCheck" style={{ fontSize: '0.72rem', color: 'var(--color-cream-muted)', lineHeight: 1.35 }}>
+                        I solemnly confirm that I am <strong>21+ years of age</strong> under State Excise Rules, agree to KYC age verification, and consent to physical doorstep ID check.
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading || !isLegalAge || !ageConfirmed || !isPasswordValid || !pwdMatches}
                       style={{
                         width: '100%',
-                        padding: '8px 0',
-                        background: 'transparent',
+                        padding: '13px',
+                        borderRadius: 'var(--radius-full)',
+                        background:
+                          isLegalAge && ageConfirmed && isPasswordValid && pwdMatches
+                            ? 'linear-gradient(135deg, #0D4F3C 0%, #16845B 50%, #4FAF86 100%)'
+                            : 'rgba(255,255,255,0.06)',
+                        color: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+                        fontWeight: 800,
+                        fontSize: '0.92rem',
                         border: 'none',
-                        color: 'var(--color-cream)',
-                        fontSize: '0.86rem',
-                        outline: 'none',
-                        colorScheme: 'dark',
+                        cursor: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? 'pointer' : 'not-allowed',
+                        boxShadow: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? '0 4px 18px rgba(22, 132, 91, 0.4)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        marginBottom: '10px',
                       }}
-                    />
-                  </div>
-                </div>
+                    >
+                      {isLoading ? <RefreshCw className="spin-slow" size={17} /> : <Sparkles size={17} />}
+                      <span>{isLoading ? 'Sending Code...' : 'Register & Claim ₹150 Safe Ride Credit'}</span>
+                    </button>
+                  </form>
+                )}
 
-                {/* Safe Ride Voucher Applied */}
-                <div
-                  style={{
-                    background: 'rgba(101, 201, 156, 0.08)',
-                    border: '1px solid rgba(101, 201, 156, 0.28)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '8px 12px',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  <Car size={18} color="var(--color-primary-mint)" />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-primary-mint)' }}>
-                      ₹150 Safe Ride Home Voucher Applied
+                {/* ─── OPTION B: LICENSED RETAILER REGISTRATION FORM ─── */}
+                {accountType === 'retailer' && (
+                  <form onSubmit={handleSendOtp}>
+                    {/* Store / Trade Name */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          color: 'var(--color-cream-muted)',
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Store / Trade Name
+                      </label>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--color-card-border)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0 10px',
+                        }}
+                      >
+                        <Store size={14} color="var(--color-primary-mint)" style={{ marginRight: '6px' }} />
+                        <input
+                          type="text"
+                          value={storeName}
+                          onChange={(e) => setStoreName(e.target.value)}
+                          placeholder="Jubilee Hills Reserve Spirits"
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '9px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--color-cream)',
+                            fontSize: '0.86rem',
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--color-cream-muted)' }}>
-                      Redeemable on Uber, Ola, or Rapido after ordering
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                      {/* Licensee / Manager Full Name */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Licensee / Manager Name
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <User size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="text"
+                            value={licenseeName}
+                            onChange={(e) => setLicenseeName(e.target.value)}
+                            placeholder="Vikram Malhotra"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Official Business Phone */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Business Mobile (OTP)
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <Smartphone size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="tel"
+                            value={retailerPhone}
+                            onChange={(e) => setRetailerPhone(e.target.value)}
+                            placeholder="98490 89124"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <span
-                    style={{
-                      background: 'var(--color-primary-mint)',
-                      color: '#0E1511',
-                      fontWeight: 900,
-                      fontSize: '0.66rem',
-                      padding: '3px 7px',
-                      borderRadius: 'var(--radius-xs)',
-                    }}
-                  >
-                    SAFERIDE150
-                  </span>
-                </div>
 
-                {/* Statutory Checkbox */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px' }}>
-                  <input
-                    type="checkbox"
-                    id="ageCheck"
-                    checked={ageConfirmed}
-                    onChange={(e) => setAgeConfirmed(e.target.checked)}
-                    required
-                    style={{ marginTop: '3px', accentColor: 'var(--color-primary-mint)' }}
-                  />
-                  <label htmlFor="ageCheck" style={{ fontSize: '0.72rem', color: 'var(--color-cream-muted)', lineHeight: 1.35 }}>
-                    I solemnly confirm that I am <strong>21+ years of age</strong> under State Excise Rules, agree to KYC age verification, and consent to physical doorstep ID check.
-                  </label>
-                </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px', marginBottom: '10px' }}>
+                      {/* State Excise License Number */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <label
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              color: 'var(--color-cream-muted)',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Excise License (A4)
+                          </label>
+                          <span style={{ fontSize: '0.64rem', color: 'var(--color-primary-mint)', fontWeight: 700 }}>
+                            Telangana State
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <ShieldCheck size={14} color="var(--color-primary-mint)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="text"
+                            value={licenseNumber}
+                            onChange={(e) => setLicenseNumber(e.target.value.toUpperCase())}
+                            placeholder="TS/EXCISE/HYD/2026/0481"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                              fontFamily: 'monospace',
+                            }}
+                          />
+                        </div>
+                      </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading || !isLegalAge || !ageConfirmed || !isPasswordValid || !pwdMatches}
-                  style={{
-                    width: '100%',
-                    padding: '13px',
-                    borderRadius: 'var(--radius-full)',
-                    background:
-                      isLegalAge && ageConfirmed && isPasswordValid && pwdMatches
-                        ? 'linear-gradient(135deg, #0D4F3C 0%, #16845B 50%, #4FAF86 100%)'
-                        : 'rgba(255,255,255,0.06)',
-                    color: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-                    fontWeight: 800,
-                    fontSize: '0.92rem',
-                    border: 'none',
-                    cursor: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? 'pointer' : 'not-allowed',
-                    boxShadow: isLegalAge && ageConfirmed && isPasswordValid && pwdMatches ? '0 4px 18px rgba(22, 132, 91, 0.4)' : 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    marginBottom: '10px',
-                  }}
-                >
-                  {isLoading ? <RefreshCw className="spin-slow" size={17} /> : <Sparkles size={17} />}
-                  <span>{isLoading ? 'Sending Code...' : 'Register & Claim ₹150 Safe Ride Credit'}</span>
-                </button>
-              </form>
+                      {/* GSTIN */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          GSTIN Number
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <FileText size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type="text"
+                            value={gstin}
+                            onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                            placeholder="36AAACB1234D1Z5"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                              fontFamily: 'monospace',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Outlet Physical Address & Pincode */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          color: 'var(--color-cream-muted)',
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Outlet Physical Address & Pincode
+                      </label>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--color-card-border)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0 10px',
+                        }}
+                      >
+                        <MapPin size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                        <input
+                          type="text"
+                          value={storeAddress}
+                          onChange={(e) => setStoreAddress(e.target.value)}
+                          placeholder="Plot 42, Road 36, Jubilee Hills, Hyderabad - 500033"
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '9px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--color-cream)',
+                            fontSize: '0.86rem',
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password Fields */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Terminal Password
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <Lock size={14} color="var(--color-cream-muted)" style={{ marginRight: '6px' }} />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color: 'var(--color-cream-muted)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Confirm Password
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: pwdMatches ? '1px solid var(--color-primary-mint)' : '1px solid var(--color-card-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0 10px',
+                          }}
+                        >
+                          <ShieldCheck size={14} color={pwdMatches ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)'} style={{ marginRight: '6px' }} />
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '9px 0',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-cream)',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CompareX Password Strength Checklist */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '4px 10px',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        borderRadius: 'var(--radius-xs)',
+                        padding: '7px 10px',
+                        marginBottom: '10px',
+                        fontSize: '0.66rem',
+                      }}
+                    >
+                      <span style={{ color: pwdLengthValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdLengthValid ? '✓' : '○'} 8-16 characters
+                      </span>
+                      <span style={{ color: pwdUpperValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdUpperValid ? '✓' : '○'} 1 Uppercase (A-Z)
+                      </span>
+                      <span style={{ color: pwdNumValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdNumValid ? '✓' : '○'} 1 Number (0-9)
+                      </span>
+                      <span style={{ color: pwdSpecialValid ? 'var(--color-primary-mint)' : 'var(--color-cream-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {pwdSpecialValid ? '✓' : '○'} 1 Special symbol
+                      </span>
+                    </div>
+
+                    {/* Statutory Licensee Declaration Checkbox */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px' }}>
+                      <input
+                        type="checkbox"
+                        id="retailerDeclaredCheck"
+                        checked={retailerDeclared}
+                        onChange={(e) => setRetailerDeclared(e.target.checked)}
+                        required
+                        style={{ marginTop: '3px', accentColor: 'var(--color-primary-mint)' }}
+                      />
+                      <label htmlFor="retailerDeclaredCheck" style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)', lineHeight: 1.35 }}>
+                        I solemnly declare that our establishment holds a valid <strong>2026 Telangana State Excise A4 License</strong>, authorized storage, and agrees to Boozer's merchant dispatch guidelines, digital batch tracking, and rider OTP handover.
+                      </label>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={
+                        isLoading ||
+                        !storeName ||
+                        !licenseeName ||
+                        !licenseNumber ||
+                        !gstin ||
+                        !storeAddress ||
+                        !retailerDeclared ||
+                        !isPasswordValid ||
+                        !pwdMatches
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '13px',
+                        borderRadius: 'var(--radius-full)',
+                        background:
+                          storeName && licenseeName && licenseNumber && gstin && storeAddress && retailerDeclared && isPasswordValid && pwdMatches
+                            ? 'linear-gradient(135deg, #0D4F3C 0%, #16845B 50%, #4FAF86 100%)'
+                            : 'rgba(255,255,255,0.06)',
+                        color:
+                          storeName && licenseeName && licenseNumber && gstin && storeAddress && retailerDeclared && isPasswordValid && pwdMatches
+                            ? '#FFFFFF'
+                            : 'rgba(255,255,255,0.3)',
+                        fontWeight: 800,
+                        fontSize: '0.92rem',
+                        border: 'none',
+                        cursor:
+                          storeName && licenseeName && licenseNumber && gstin && storeAddress && retailerDeclared && isPasswordValid && pwdMatches
+                            ? 'pointer'
+                            : 'not-allowed',
+                        boxShadow:
+                          storeName && licenseeName && licenseNumber && gstin && storeAddress && retailerDeclared && isPasswordValid && pwdMatches
+                            ? '0 4px 18px rgba(22, 132, 91, 0.4)'
+                            : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      {isLoading ? <RefreshCw className="spin-slow" size={17} /> : <Store size={17} />}
+                      <span>{isLoading ? 'Verifying Credentials...' : 'Register Licensed Outlet & Open Terminal →'}</span>
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
           </div>
         )}

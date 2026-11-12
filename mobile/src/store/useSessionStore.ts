@@ -5,13 +5,18 @@ export interface UserProfile {
   id: string;
   fullName: string;
   phone: string;
-  dateOfBirth: string;
-  calculatedAge: number;
+  dateOfBirth?: string;
+  calculatedAge?: number;
   kycStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
   documentType: string;
   maskedDocNumber: string;
-  deliveryAddress: string;
-  activeRideCredit: number;
+  deliveryAddress?: string;
+  activeRideCredit?: number;
+  role?: 'CUSTOMER' | 'RETAILER' | 'ADMIN';
+  storeName?: string;
+  licenseNumber?: string;
+  gstin?: string;
+  storeAddress?: string;
 }
 
 interface SessionState {

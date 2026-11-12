@@ -103,6 +103,22 @@ class MobileApiClient {
     }
   }
 
+  async setToken(token: string): Promise<void> {
+    try {
+      await SecureStore.setItemAsync('boozer_jwt_token', token);
+    } catch {
+      // Ignored in dev
+    }
+  }
+
+  async clearToken(): Promise<void> {
+    try {
+      await SecureStore.deleteItemAsync('boozer_jwt_token');
+    } catch {
+      // Ignored in dev
+    }
+  }
+
   private async request<T>(path: string, options: RequestInit = {}): Promise<T | null> {
     const token = await this.getAuthToken();
     const headers: Record<string, string> = {
@@ -129,6 +145,35 @@ class MobileApiClient {
       // Auto-fallback in Expo dev / offline mode
       return null;
     }
+  }
+
+  // --- AUTH & OTP ---
+  async requestOtp(phone: string) {
+    const live = await this.request<{ success: boolean; message: string }>('/auth/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+    return live || { success: true, message: `OTP sent to ${phone} (Sandbox: 123456)` };
+  }
+
+  async verifyOtp(phone: string, otp: string) {
+    const live = await this.request<{ token: string; user: any }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ phone, otp }),
+    });
+    if (live) {
+      await this.setToken(live.token);
+      return live;
+    }
+    return {
+      token: 'mock-mobile-jwt-token',
+      user: {
+        id: 'usr-mobile-1',
+        phone,
+        fullName: 'Kabir Varma',
+        kycStatus: 'VERIFIED',
+      },
+    };
   }
 
   // --- CATALOG ---
