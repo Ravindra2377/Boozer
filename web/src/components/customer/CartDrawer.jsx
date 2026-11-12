@@ -39,7 +39,7 @@ export function CartDrawer({
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{
-      background: 'rgba(0, 0, 0, 0.75)',
+      background: 'rgba(24, 32, 28, 0.50)',
       backdropFilter: 'blur(8px)',
       WebkitBackdropFilter: 'blur(8px)',
     }}>
@@ -69,9 +69,9 @@ export function CartDrawer({
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: 'none',
+              background: '#F1F4F1', border: 'none',
               width: '32px', height: '32px', borderRadius: '50%',
-              color: 'var(--color-cream-muted)', cursor: 'pointer',
+              color: 'var(--color-cream)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
           >
@@ -88,7 +88,7 @@ export function CartDrawer({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, overflowY: 'auto' }}>
             {/* Delivery Destination */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--color-card-border)',
+              background: '#F7F9F8', border: '1px solid var(--color-card-border)',
               borderRadius: 'var(--radius-md)', padding: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start'
             }}>
               <MapPin size={18} color="var(--color-primary-mint)" style={{ marginTop: '2px', flexShrink: 0 }} />
@@ -99,8 +99,8 @@ export function CartDrawer({
                 </p>
                 <span style={{
                   marginTop: '6px', display: 'inline-flex',
-                  background: 'rgba(5, 150, 105, 0.16)', color: 'var(--color-primary-mint)',
-                  border: '1px solid var(--color-savings)', padding: '2px 8px', borderRadius: 'var(--radius-xs)',
+                  background: 'rgba(22, 132, 91, 0.10)', color: 'var(--color-primary-mint)',
+                  border: '1px solid rgba(22, 132, 91, 0.25)', padding: '2px 8px', borderRadius: 'var(--radius-xs)',
                   fontSize: '0.68rem', fontWeight: 700
                 }}>
                   Within 6.5km legal excise delivery perimeter
@@ -255,20 +255,20 @@ export function CartDrawer({
 
         {/* Razorpay Simulation Modal */}
         {showRazorpayModal && (
-          <div className="modal-overlay" style={{ zIndex: 300, background: 'rgba(0, 0, 0, 0.85)' }}>
-            <div className="modal-content-card" style={{ maxWidth: '400px', background: '#0E1511', border: '1px solid var(--color-card-border)' }}>
+          <div className="modal-overlay" style={{ zIndex: 300, background: 'rgba(24, 32, 28, 0.50)' }}>
+            <div className="modal-content-card" style={{ maxWidth: '400px', background: '#FFFFFF', border: '1px solid var(--color-card-border)', boxShadow: '0 20px 48px rgba(0,0,0,0.15)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ background: '#0A2E23', color: 'var(--color-primary-mint)', padding: '4px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '0.8rem' }}>
+                  <div style={{ background: '#EAF5EF', color: '#16845B', padding: '4px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '0.8rem' }}>
                     Razorpay
                   </div>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-cream)' }}>Secure Checkout</span>
                 </div>
                 <button
                   onClick={() => setShowRazorpayModal(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}
+                  style={{ background: '#F1F4F1', border: 'none', color: 'var(--color-cream)', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -282,7 +282,7 @@ export function CartDrawer({
               <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
-                  background: paymentMethod === 'UPI' ? 'rgba(101, 201, 156, 0.12)' : 'rgba(255,255,255,0.02)',
+                  background: paymentMethod === 'UPI' ? 'rgba(22, 132, 91, 0.08)' : '#F7F9F8',
                   border: `1px solid ${paymentMethod === 'UPI' ? 'var(--color-primary-mint)' : 'var(--color-card-border)'}`,
                   padding: '10px', borderRadius: '8px', cursor: 'pointer'
                 }}>
@@ -293,14 +293,14 @@ export function CartDrawer({
                     onChange={() => setPaymentMethod('UPI')}
                   />
                   <div>
-                    <strong style={{ fontSize: '0.82rem', color: '#fff' }}>Instant UPI (GPay / PhonePe / Paytm)</strong>
+                    <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>Instant UPI (GPay / PhonePe / Paytm)</strong>
                     <p style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>Fastest approval · Zero transaction fee</p>
                   </div>
                 </label>
 
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
-                  background: paymentMethod === 'CARD' ? 'rgba(101, 201, 156, 0.12)' : 'rgba(255,255,255,0.02)',
+                  background: paymentMethod === 'CARD' ? 'rgba(22, 132, 91, 0.08)' : '#F7F9F8',
                   border: `1px solid ${paymentMethod === 'CARD' ? 'var(--color-primary-mint)' : 'var(--color-card-border)'}`,
                   padding: '10px', borderRadius: '8px', cursor: 'pointer'
                 }}>
@@ -311,7 +311,7 @@ export function CartDrawer({
                     onChange={() => setPaymentMethod('CARD')}
                   />
                   <div>
-                    <strong style={{ fontSize: '0.82rem', color: '#fff' }}>Credit or Debit Card</strong>
+                    <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>Credit or Debit Card</strong>
                     <p style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>Visa, Mastercard, RuPay</p>
                   </div>
                 </label>

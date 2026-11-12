@@ -70,9 +70,9 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-amber) 0%, #B87820 100%)',
+            background: 'linear-gradient(135deg, #16845B 0%, #0D4F3C 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.4rem', fontWeight: 900, color: 'var(--color-ink)'
+            fontSize: '1.4rem', fontWeight: 900, color: '#FFFFFF'
           }}>
             {(user?.fullName || user?.name || user?.phone || 'U').charAt(0).toUpperCase()}
           </div>
@@ -88,14 +88,14 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
 
         {/* KYC Verification Box */}
         <div style={{
-          background: 'rgba(42, 157, 143, 0.12)', border: '1px solid rgba(42, 157, 143, 0.35)',
+          background: '#EAF5EF', border: '1px solid #DFE6E1',
           borderRadius: '8px', padding: '10px 12px', display: 'flex', justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={18} color="var(--color-teal)" />
+            <ShieldCheck size={18} color="#16845B" />
             <div>
-              <strong style={{ fontSize: '0.8rem', color: 'var(--color-teal)' }}>
+              <strong style={{ fontSize: '0.8rem', color: '#16845B' }}>
                 DigiLocker KYC Verified
               </strong>
               <p style={{ fontSize: '0.7rem', color: 'var(--color-cream-muted)' }}>
@@ -106,8 +106,8 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
           <button
             onClick={onOpenKycModal}
             style={{
-              background: 'transparent', border: 'none', color: 'var(--color-cream)',
-              fontSize: '0.72rem', cursor: 'pointer', textDecoration: 'underline'
+              background: 'transparent', border: 'none', color: '#16845B',
+              fontSize: '0.72rem', cursor: 'pointer', textDecoration: 'underline', fontWeight: 700
             }}
           >
             View Details
@@ -117,27 +117,32 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
 
       {/* Safe Ride Wallet */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(232, 163, 61, 0.15) 0%, rgba(42, 157, 143, 0.15) 100%)',
-        border: '1px solid rgba(232, 163, 61, 0.3)', borderRadius: 'var(--radius-md)', padding: '16px',
+        background: '#FFF9ED',
+        border: '1px solid #FCD34D', borderRadius: 'var(--radius-md)', padding: '16px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
-            width: '40px', height: '40px', borderRadius: '10px', background: 'var(--color-amber)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-ink)'
+            width: '40px', height: '40px', borderRadius: '10px', background: '#F59E0B',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF'
           }}>
             <Car size={22} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-cream-muted)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.72rem', color: '#92400E', textTransform: 'uppercase', fontWeight: 700 }}>
               Safe Ride Wallet Balance
             </span>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-amber)' }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#B45309' }}>
               ₹{(user?.activeRideCredit ?? 150).toFixed(2)}
             </h3>
           </div>
         </div>
-        <span className="badge-teal">1 Active Credit</span>
+        <span style={{
+          background: '#EAF5EF', color: '#16845B', border: '1px solid #C5E3D2',
+          padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.72rem', fontWeight: 700
+        }}>
+          1 Active Credit
+        </span>
       </div>
 
       {/* Saved Delivery Addresses */}
@@ -146,7 +151,7 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
           Saved Delivery Address
         </h3>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-          <MapPin size={16} color="var(--color-amber)" style={{ marginTop: '2px', flexShrink: 0 }} />
+          <MapPin size={16} color="#16845B" style={{ marginTop: '2px', flexShrink: 0 }} />
           <div>
             <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>Home / Delivery Zone</strong>
             <p style={{ fontSize: '0.75rem', color: 'var(--color-cream-muted)', marginTop: '2px' }}>
@@ -171,7 +176,13 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <strong style={{ fontSize: '0.84rem', color: 'var(--color-cream)' }}>{ord.id}</strong>
-                <span className={ord.status === 'DELIVERED' ? 'badge-teal' : 'badge-amber'}>
+                <span style={{
+                  background: ord.status === 'DELIVERED' ? '#EAF5EF' : '#FEF3C7',
+                  color: ord.status === 'DELIVERED' ? '#16845B' : '#B45309',
+                  border: `1px solid ${ord.status === 'DELIVERED' ? '#C5E3D2' : '#FDE68A'}`,
+                  borderRadius: 'var(--radius-full)',
+                  padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700
+                }}>
                   {ord.status === 'DELIVERED' ? 'Delivered' : 'In Transit'}
                 </span>
               </div>
@@ -184,14 +195,14 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
 
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                borderTop: '1px solid var(--color-ink-border)', paddingTop: '8px', marginTop: '4px'
+                borderTop: '1px solid var(--color-card-border)', paddingTop: '8px', marginTop: '4px'
               }}>
                 <div style={{ fontSize: '0.74rem' }}>
                   <span style={{ color: 'var(--color-cream-muted)' }}>Total: </span>
-                  <strong style={{ color: 'var(--color-amber)' }}>{ord.amount}</strong>
+                  <strong style={{ color: '#18201C', fontWeight: 800 }}>{ord.amount}</strong>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--color-teal)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#16845B', fontWeight: 600 }}>
                   <Car size={13} />
                   <span>Ride Credit: {ord.rideCredit}</span>
                 </div>
@@ -215,9 +226,9 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
             width: '100%',
             padding: '12px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.35)',
-            color: '#FCA5A5',
+            background: '#FEF2F2',
+            border: '1px solid #FECACA',
+            color: '#DC2626',
             fontSize: '0.84rem',
             fontWeight: 800,
             cursor: 'pointer',
@@ -228,12 +239,12 @@ export function ProfileScreen({ user, onOpenKycModal, onSignOut, onOpenAuthModal
             transition: 'all 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
-            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+            e.currentTarget.style.background = '#FEE2E2';
+            e.currentTarget.style.borderColor = '#FCA5A5';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+            e.currentTarget.style.background = '#FEF2F2';
+            e.currentTarget.style.borderColor = '#FECACA';
           }}
         >
           <LogOut size={16} />

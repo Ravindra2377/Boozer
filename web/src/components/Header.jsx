@@ -32,17 +32,18 @@ export function Header({
   return (
     <>
       <header className="platform-top-bar" style={{
-        background: 'rgba(23, 32, 27, 0.92)',
+        background: '#FFFFFF',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--color-card-border)',
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
       }}>
         {/* Signature BOOZER Brand Badge with CompareX Editorial Touch */}
         <div className="brand-badge">
           <button type="button" onClick={() => setActiveView('customer')} aria-label="BOOZER home"
             style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <span className="logo-full"><BoozerNeonLogo variant="neon" height={46} /></span>
-            <span className="logo-mark"><BoozerNeonLogo variant="mark" height={40} /></span>
+            <span className="logo-full"><BoozerNeonLogo variant="solid" solidColor="#16845B" height={44} /></span>
+            <span className="logo-mark"><BoozerNeonLogo variant="mark" solidColor="#16845B" height={40} /></span>
           </button>
 
           {/* Location Selector Pill */}
@@ -52,7 +53,7 @@ export function Header({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(23, 32, 27, 0.65)',
+              background: '#F1F4F1',
               border: '1px solid var(--color-card-border)',
               borderRadius: 'var(--radius-full)',
               padding: '4px 10px',
@@ -72,7 +73,7 @@ export function Header({
 
         {/* Mode Switcher Tabs */}
         <div className="view-modes-pills" style={{
-          background: 'rgba(14, 21, 17, 0.8)',
+          background: '#F1F4F1',
           border: '1px solid var(--color-card-border)',
           borderRadius: 'var(--radius-full)',
           padding: '4px',
@@ -123,8 +124,8 @@ export function Header({
                 onClick={onOpenKycModal}
                 title="Click to view DigiLocker KYC details"
                 style={{
-                  background: 'rgba(5, 150, 105, 0.16)',
-                  border: '1px solid var(--color-savings)',
+                  background: 'rgba(22, 132, 91, 0.10)',
+                  border: '1px solid rgba(22, 132, 91, 0.25)',
                   color: 'var(--color-primary-mint)',
                 }}
               >
@@ -144,10 +145,10 @@ export function Header({
               <button
                 className="view-mode-btn"
                 style={{
-                  background: 'rgba(101, 201, 156, 0.14)',
+                  background: 'rgba(22, 132, 91, 0.08)',
                   color: 'var(--color-primary-mint)',
                   position: 'relative',
-                  border: '1px solid rgba(101, 201, 156, 0.35)',
+                  border: '1px solid rgba(22, 132, 91, 0.25)',
                   borderRadius: 'var(--radius-full)',
                   padding: '6px 14px',
                 }}
@@ -158,7 +159,7 @@ export function Header({
                 {cartCount > 0 && (
                   <span style={{
                     position: 'absolute', top: '-5px', right: '-5px',
-                    background: 'var(--color-primary-mint)', color: '#0E1511',
+                    background: 'var(--color-primary-mint)', color: '#FFFFFF',
                     width: '18px', height: '18px', borderRadius: '50%',
                     fontSize: '0.68rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
@@ -183,7 +184,7 @@ export function Header({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '4px 10px',
-                  background: 'var(--color-plum-surface)',
+                  background: '#F1F4F1',
                   border: '1px solid var(--color-card-border)',
                   borderRadius: 'var(--radius-full)',
                 }}
@@ -195,7 +196,7 @@ export function Header({
                     height: '22px',
                     borderRadius: '50%',
                     background: 'var(--color-primary-mint)',
-                    color: '#0E1511',
+                    color: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -224,9 +225,9 @@ export function Header({
                 onClick={onSignOut}
                 className="view-mode-btn"
                 style={{
-                  background: 'rgba(220, 76, 62, 0.12)',
-                  border: '1px solid rgba(220, 76, 62, 0.3)',
-                  color: '#F87171',
+                  background: 'rgba(220, 76, 62, 0.08)',
+                  border: '1px solid rgba(220, 76, 62, 0.25)',
+                  color: '#DC2626',
                   gap: '6px',
                   padding: '6px 12px',
                   cursor: 'pointer',
@@ -261,12 +262,12 @@ export function Header({
       {isLocationModalOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 1000,
-          background: 'rgba(0, 0, 0, 0.75)',
+          background: 'rgba(24, 32, 28, 0.50)',
           backdropFilter: 'blur(6px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
         }}>
           <div style={{
-            background: 'var(--color-plum-surface)',
+            background: '#FFFFFF',
             border: '1px solid var(--color-card-border)',
             borderRadius: 'var(--radius-lg)',
             width: '100%', maxWidth: '440px',
@@ -286,7 +287,7 @@ export function Header({
                 onClick={() => setIsLocationModalOpen(false)}
                 style={{
                   width: '32px', height: '32px', borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.06)', border: 'none',
+                  background: '#F1F4F1', border: 'none',
                   color: 'var(--color-cream)', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', cursor: 'pointer'
                 }}
@@ -308,7 +309,7 @@ export function Header({
                     style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       padding: '12px 14px', borderRadius: 'var(--radius-md)',
-                      background: isSelected ? 'rgba(101, 201, 156, 0.12)' : 'rgba(255,255,255,0.03)',
+                      background: isSelected ? 'rgba(22, 132, 91, 0.08)' : '#F7F9F8',
                       border: isSelected ? '1px solid var(--color-primary-mint)' : '1px solid var(--color-card-border)',
                       cursor: 'pointer', transition: 'var(--transition-fast)'
                     }}
@@ -327,7 +328,7 @@ export function Header({
 
                     {isSelected && (
                       <span style={{
-                        background: 'var(--color-primary-mint)', color: '#0E1511',
+                        background: 'var(--color-primary-mint)', color: '#FFFFFF',
                         padding: '2px 8px', borderRadius: 'var(--radius-full)',
                         fontSize: '0.68rem', fontWeight: 800
                       }}>

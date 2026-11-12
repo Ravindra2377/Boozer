@@ -79,9 +79,9 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }) {
 
           <div style={{
             position: 'absolute', bottom: '10px', left: '10px',
-            background: 'rgba(14, 21, 17, 0.88)', backdropFilter: 'blur(8px)',
+            background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)',
             borderRadius: 'var(--radius-sm)', padding: '4px 10px', display: 'flex', gap: '8px', fontSize: '0.76rem',
-            border: '1px solid rgba(101, 201, 156, 0.25)'
+            border: '1px solid var(--color-card-border)'
           }}>
             <span style={{ color: 'var(--color-primary-mint)', fontWeight: 700 }}>{product.abv}% ABV</span>
             <span style={{ color: 'var(--color-cream-muted)' }}>|</span>
@@ -101,7 +101,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }) {
 
         {/* Statutory MRP Card with CompareX Savings Styling */}
         <div style={{
-          background: 'rgba(101, 201, 156, 0.08)', border: '1px solid rgba(101, 201, 156, 0.3)',
+          background: 'rgba(22, 132, 91, 0.08)', border: '1px solid rgba(22, 132, 91, 0.25)',
           borderRadius: 'var(--radius-md)', padding: '12px 14px', display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', marginBottom: '16px'
         }}>
@@ -135,7 +135,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }) {
 
         {/* Quick Delivery Comparison Matrix */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--color-card-border)',
+          background: '#F7F9F8', border: '1px solid var(--color-card-border)',
           borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: '14px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem'
         }}>
@@ -152,7 +152,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }) {
         <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {product.tastingNotes && (
             <div style={{
-              background: 'rgba(23, 32, 27, 0.7)', borderRadius: 'var(--radius-sm)', padding: '10px 12px',
+              background: '#F7F9F8', borderRadius: 'var(--radius-sm)', padding: '10px 12px',
               border: '1px solid var(--color-card-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.76rem'
             }}>
               <Sparkles size={15} color="var(--color-primary-mint)" />

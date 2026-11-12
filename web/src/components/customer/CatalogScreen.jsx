@@ -94,7 +94,7 @@ export function CatalogScreen({
             width: '36px', height: '36px', borderRadius: '50%',
             background: 'var(--color-primary-mint)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.9rem', fontWeight: 800, color: '#0E1511'
+            fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF'
           }}>
             P
           </div>
@@ -190,8 +190,8 @@ export function CatalogScreen({
                 padding: '6px 14px',
                 fontSize: '0.75rem',
                 fontWeight: 800,
-                background: 'var(--color-primary-mint)',
-                color: '#0E1511',
+                background: '#FFFFFF',
+                color: '#16845B',
                 border: 'none',
                 borderRadius: 'var(--radius-full)',
                 display: 'inline-flex',
@@ -295,9 +295,9 @@ export function CatalogScreen({
                   {/* ABV Tag */}
                   <span style={{
                     position: 'absolute', bottom: '6px', left: '6px',
-                    background: 'rgba(14, 21, 17, 0.85)', backdropFilter: 'blur(6px)',
+                    background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(6px)',
                     color: 'var(--color-primary-mint)', fontSize: '0.65rem', fontWeight: 700,
-                    padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(101, 201, 156, 0.25)'
+                    padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-card-border)'
                   }}>
                     {prod.abv}% ABV · {prod.volumeMl}ml
                   </span>
@@ -360,22 +360,22 @@ export function CatalogScreen({
       {/* Added to Cart Toast */}
       {pourProduct && (
         <div className="liquid-pour-toast" style={{
-          background: 'rgba(23, 32, 27, 0.95)',
+          background: '#FFFFFF',
           border: '1px solid var(--color-primary-mint)',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(101, 201, 156, 0.25)',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(22, 132, 91, 0.15)',
         }}>
           <div style={{
             width: '26px', height: '26px', borderRadius: '50%',
-            background: 'var(--color-primary-mint)', color: '#0E1511',
+            background: 'var(--color-primary-mint)', color: '#FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <Check size={15} strokeWidth={3} />
           </div>
           <div>
-            <strong style={{ fontSize: '0.82rem', color: '#fff' }}>
+            <strong style={{ fontSize: '0.82rem', color: 'var(--color-cream)' }}>
               Added {pourProduct.name}
             </strong>
-            <p style={{ fontSize: '0.7rem', color: 'var(--color-primary-mint)' }}>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-primary-mint)', fontWeight: 600 }}>
               Added to order · ₹150 Safe Ride Credit active
             </p>
           </div>
